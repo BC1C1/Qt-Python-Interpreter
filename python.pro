@@ -17,14 +17,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     core/objects/environment.cpp \
-    lexer.cpp \
+    core/utils/lexer.cpp \
     main.cpp \
     mainwindow.cpp \
     core/objects/pobject.cpp
 
 HEADERS += \
     core/objects/environment.h \
-    lexer.h \
+    core/utils/lexer.h \
     mainwindow.h \
     core/objects/pobject.h
 

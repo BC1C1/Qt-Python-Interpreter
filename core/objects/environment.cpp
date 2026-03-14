@@ -6,6 +6,10 @@ Environment::Environment(Environment::EPointer p, QObject *): parentEnvir(p)
 
 }
 
+Environment::~Environment()
+{
+}
+
 void Environment::assign(const QString &name, Environment::Pointer obj)
 {
     // from here
