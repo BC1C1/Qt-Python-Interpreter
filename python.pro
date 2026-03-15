@@ -16,17 +16,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    core/objects/environment.cpp \
+    core/objects/ast/astnode.cpp \
+    core/objects/runtime/environment.cpp \
+    core/utils/functions.cpp \
     core/utils/lexer.cpp \
+    core/utils/parser.cpp \
     main.cpp \
     mainwindow.cpp \
-    core/objects/pobject.cpp
+    core/objects/runtime/pobject.cpp
 
 HEADERS += \
-    core/objects/environment.h \
+    core/objects/ast/astnode.h \
+    core/objects/runtime/environment.h \
+    core/utils/functions.h \
     core/utils/lexer.h \
+    core/utils/parser.h \
     mainwindow.h \
-    core/objects/pobject.h
+    core/objects/runtime/pobject.h
 
 FORMS += \
     mainwindow.ui

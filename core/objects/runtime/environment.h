@@ -2,7 +2,7 @@
 #define ENVIRONMENT_H
 
 #include <QObject>
-#include "core/objects/pobject.h"
+#include "core/objects/runtime/pobject.h"
 namespace Py {
 class Environment : public QObject, public QEnableSharedFromThis<Environment>
 {
