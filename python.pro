@@ -18,6 +18,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     core/objects/ast/astnode.cpp \
     core/objects/runtime/environment.cpp \
+    core/objects/runtime/pbool.cpp \
+    core/objects/runtime/pfloat.cpp \
+    core/objects/runtime/pint.cpp \
+    core/objects/runtime/pnone.cpp \
+    core/objects/runtime/pstr.cpp \
+    core/objects/runtime/pvm.cpp \
     core/utils/functions.cpp \
     core/utils/lexer.cpp \
     core/utils/parser.cpp \
@@ -28,6 +34,12 @@ SOURCES += \
 HEADERS += \
     core/objects/ast/astnode.h \
     core/objects/runtime/environment.h \
+    core/objects/runtime/pbool.h \
+    core/objects/runtime/pfloat.h \
+    core/objects/runtime/pint.h \
+    core/objects/runtime/pnone.h \
+    core/objects/runtime/pstr.h \
+    core/objects/runtime/pvm.h \
     core/utils/functions.h \
     core/utils/lexer.h \
     core/utils/parser.h \

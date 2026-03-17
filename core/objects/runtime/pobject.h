@@ -9,6 +9,7 @@
 #include <QException>
 #include <stdexcept>
 #include <string>
+#include <QVariant>
 namespace Py {
 // exception define begin
 using runtime_error = std::runtime_error;
@@ -36,12 +37,14 @@ public:
     PyType getType() const;
     virtual ~PObject();
     virtual QString toString() const = 0;
+    virtual QVariant getValue() const;
 
-    // type cast
+    // 类型转换声明
     virtual pointer asInt() const;
     virtual pointer asFloat() const;
     virtual pointer asBool() const;
     virtual pointer asList() const;
+    virtual pointer asString() const;
 
     // 算术运算符声明
     virtual pointer __add__(const pointer& other) const;

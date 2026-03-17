@@ -7,19 +7,24 @@ template <typename T, typename... Args>
 QSharedPointer<T> makeShared(Args&&... args) {
     return QSharedPointer<T>::create(std::forward<Args>(args)...);
 }
+//template <typename Base, typename Derived, typename... Args>
+//QSharedPointer<Base> makeShared(Args&&... args) {
+//    return QSharedPointer<Base>(new Derived(std::forward<Args>(args)...));
+//}
 template <typename Target, typename Source>
 QSharedPointer<Target> dynamicPointerCast(const QSharedPointer<Source>& source)
 {
-    if (source.isNull()) {
-        return QSharedPointer<Target>();
-    }
+    return qSharedPointerDynamicCast<Target>(source);
+//    if (source.isNull()) {
+//        return QSharedPointer<Target>();
+//    }
 
-    Target* rawTarget = qobject_cast<Target*>(source.data());
-    if (rawTarget == nullptr) {
-        return QSharedPointer<Target>();
-    }
+//    Target* rawTarget = qobject_cast<Target*>(source.data());
+//    if (rawTarget == nullptr) {
+//        return QSharedPointer<Target>();
+//    }
 
-    return QSharedPointer<Target>(source, rawTarget); // 这里的构造注意
+//    return QSharedPointer<Target>(source, rawTarget); // 这里的构造注意
 }
 // string cast. UTF-8 is the only storage type
 inline std::string qt2std(const QString& qStr)

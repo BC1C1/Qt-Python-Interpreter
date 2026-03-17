@@ -97,7 +97,7 @@ namespace Lex
             os << ", '" << token.lexeme << "', line " << token.line << ")";
             return os;
         }
-        QString TypeToQString(TokenType type) {
+        static QString TypeToQStringStatic(TokenType type) {
             switch (type) {
                 case TokenType::COLON:     return QString("COLON");
                 case TokenType::COMMA:     return QString("COMMA");
@@ -145,7 +145,55 @@ namespace Lex
                 default:                   return QString("UNKNOWN_TOKEN");
             }
         }
-        QString TokenToQString(const Token& token) {
+        QString TypeToQString(TokenType type) const {
+            switch (type) {
+                case TokenType::COLON:     return QString("COLON");
+                case TokenType::COMMA:     return QString("COMMA");
+                case TokenType::INDENT:    return QString("INDENT");
+                case TokenType::DEDENT:    return QString("DEDENT");
+                case TokenType::IF:        return QString("IF");
+                case TokenType::IN:        return QString("IN");
+                case TokenType::For:       return QString("FOR");
+                case TokenType::ELSE:      return QString("ELSE");
+                case TokenType::ELIF:      return QString("ELIF");
+                case TokenType::WHILE:     return QString("WHILE");
+                case TokenType::PRINT:     return QString("PRINT");
+                case TokenType::INPUT:     return QString("INPUT");
+                case TokenType::TRUE:      return QString("TRUE");
+                case TokenType::FALSE:     return QString("FALSE");
+                case TokenType::IDENTIFIER:return QString("IDENTIFIER");
+                case TokenType::STRING:    return QString("STRING");
+                case TokenType::PLUS:      return QString("PLUS");
+                case TokenType::MINUS:     return QString("MINUS");
+                case TokenType::STAR:      return QString("STAR");
+                case TokenType::SLASH:     return QString("SLASH");
+                case TokenType::MOD:       return QString("MOD");
+                case TokenType::EQ:        return QString("EQ");
+                case TokenType::NEQ:       return QString("NEQ");
+                case TokenType::LT:        return QString("LT");
+                case TokenType::GT:        return QString("GT");
+                case TokenType::LTE:       return QString("LTE");
+                case TokenType::GTE:       return QString("GTE");
+                case TokenType::AND:       return QString("AND");
+                case TokenType::OR:        return QString("OR");
+                case TokenType::NOT:       return QString("NOT");
+                case TokenType::ASSIGN:    return QString("ASSIGN");
+                case TokenType::LPAREN:    return QString("LPAREN");
+                case TokenType::RPAREN:    return QString("RPAREN");
+                case TokenType::LBRACKET:  return QString("LBRACKET");
+                case TokenType::RBRACKET:  return QString("RBRACKET");
+                case TokenType::EOF_TOKEN: return QString("EOF");
+                case TokenType::ERROR:     return QString("ERROR");
+                case TokenType::INT:       return QString("INT");
+                case TokenType::FLOAT:     return QString("FLOAT");
+                case TokenType::DEF:       return QString("DEF");
+                case TokenType::RETURN:    return QString("RETURN");
+                case TokenType::CLASS:     return QString("CLASS");
+                case TokenType::DOT:       return QString("DOT");
+                default:                   return QString("UNKNOWN_TOKEN");
+            }
+        }
+        QString TokenToQString(const Token& token) const {
             return QString("Token(%1, '%2', line %3)")
                     .arg(TypeToQString(token.type))
                     .arg(QString::fromStdString(token.lexeme))

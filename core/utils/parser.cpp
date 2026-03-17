@@ -59,6 +59,49 @@ pointer Parser::parseStatement()
     return parseExpression();
 }
 
+pointer Parser::parseLValue()
+{
+    if (!match(TokenType::IDENTIFIER)) return nullptr;
+    pointer ret = makeShared<Variable>(getTokens()[current - 1].lexeme, getInstantLine());
+    while (check(TokenType::LBRACKET) || check(TokenType::LPAREN) || check(TokenType::DOT)) {
+        auto type = getTokens()[current].type;
+        current++;
+        switch (type)
+        {
+        case Lex::TokenType::LPAREN: {
+            std::vector<pointer> expressions;
+            while (!check(TokenType::RPAREN)) {
+                auto ele = parseExpression();
+                if (ele)
+                    expressions.push_back(ele);
+                if (match(TokenType::COMMA)) {
+                    continue;
+                }
+                else if (!check(TokenType::RPAREN)) {
+                    throwErrorMsg(u8"元素之间缺少逗号");
+                }
+            }
+            consume(TokenType::RPAREN, u8"缺少右括号");
+            ret = makeShared<Parse::Call>(ret, std::move(expressions), getInstantLine());
+            break;
+        }
+        case Lex::TokenType::LBRACKET: {
+            auto indexExpr = parseExpression();
+            consume(TokenType::RBRACKET, u8"索引缺少右分隔符 ']'");
+            ret = makeShared<Parse::Index>(ret, indexExpr, getInstantLine());
+            break;
+        }
+        case Lex::TokenType::DOT: {
+            auto& attribute = consume(TokenType::IDENTIFIER, u8"无效的属性");
+            ret = makeShared<Parse::Attribute>(ret, attribute.lexeme, getInstantLine());
+            break;
+        }
+        default: break; // 无意义，仅为了消除警告
+        }
+    }
+    return ret;
+}
+
 pointer Parser::parseExpression()
 {
     return parseOr();
@@ -256,12 +299,12 @@ pointer Parser::parsePrimary()
         case Lex::TokenType::LBRACKET: {
             auto indexExpr = parseExpression();
             consume(TokenType::RBRACKET, u8"索引缺少右分隔符 ']'");
-            ret = makeShared<Parse::Index>(ret, indexExpr);
+            ret = makeShared<Parse::Index>(ret, indexExpr, getInstantLine());
             break;
         }
         case Lex::TokenType::DOT: {
             auto& attribute = consume(TokenType::IDENTIFIER, u8"无效的属性");
-            ret = makeShared<Parse::Attribute>(ret, attribute.lexeme);
+            ret = makeShared<Parse::Attribute>(ret, attribute.lexeme, getInstantLine());
             break;
         }
         default: break; // 无意义，仅为了消除警告
@@ -290,6 +333,11 @@ pointer Parser::parseList()
 
     consume(TokenType::RBRACKET, u8"缺失的右中括号");
     return makeShared<List>(std::move(elements), getInstantLine());
+}
+
+void Parser::throwErrorMsg(std::string text)
+{
+    throw std::runtime_error(text);
 }
 
 bool Parser::isAtEnd()

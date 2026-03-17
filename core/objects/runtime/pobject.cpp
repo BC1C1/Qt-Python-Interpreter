@@ -46,6 +46,11 @@ PObject::~PObject()
 {
 }
 
+QVariant PObject::getValue() const
+{
+    throw std::runtime_error((QString(u8"类型：%1不可获取值").arg(TypeToString(type.type))).toUtf8().data());
+}
+
 PObject::pointer PObject::asInt() const
 {
     this->noSuchCast(u8"int");
@@ -67,6 +72,12 @@ PObject::pointer PObject::asBool() const
 PObject::pointer PObject::asList() const
 {
     this->noSuchCast(u8"list");
+    return nullptr;
+}
+
+PObject::pointer PObject::asString() const
+{
+    this->noSuchCast(u8"string");
     return nullptr;
 }
 
