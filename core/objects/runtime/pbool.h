@@ -10,6 +10,10 @@ public:
     QString toString() const override;
     virtual QVariant getValue() const override;
     virtual ~PBool();
+
+    virtual pointer asInt() const override;
+    virtual pointer asFloat() const override;
+    virtual pointer asBool() const override;
 private:
     bool value;
 };

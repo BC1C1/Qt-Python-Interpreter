@@ -16,11 +16,23 @@ public:
     explicit Parser(QObject *parent = nullptr);
     pointer parse(const std::vector<Token>& tokens);
 private:
+    pointer parseBlock(bool isNeedNewEnvir);
+
     pointer parseAssign();
     pointer parsePrint();
     pointer parseStatement();
 
     pointer parseLValue();
+
+    pointer parseIfStmt();
+    pointer parseElifStmt();
+    pointer parseElseStmt();
+
+    pointer parseWhile();
+    pointer parseFor();
+
+    pointer parseBreak();
+    pointer parseContinue();
 private:
     pointer parseExpression();
     pointer parseOr();

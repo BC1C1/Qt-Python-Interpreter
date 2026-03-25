@@ -21,9 +21,12 @@ SOURCES += \
     core/objects/runtime/pbool.cpp \
     core/objects/runtime/pfloat.cpp \
     core/objects/runtime/pint.cpp \
+    core/objects/runtime/piterator.cpp \
+    core/objects/runtime/plist.cpp \
     core/objects/runtime/pnone.cpp \
     core/objects/runtime/pstr.cpp \
     core/objects/runtime/pvm.cpp \
+    core/utils/compiler.cpp \
     core/utils/functions.cpp \
     core/utils/lexer.cpp \
     core/utils/parser.cpp \
@@ -37,9 +40,12 @@ HEADERS += \
     core/objects/runtime/pbool.h \
     core/objects/runtime/pfloat.h \
     core/objects/runtime/pint.h \
+    core/objects/runtime/piterator.h \
+    core/objects/runtime/plist.h \
     core/objects/runtime/pnone.h \
     core/objects/runtime/pstr.h \
     core/objects/runtime/pvm.h \
+    core/utils/compiler.h \
     core/utils/functions.h \
     core/utils/lexer.h \
     core/utils/parser.h \

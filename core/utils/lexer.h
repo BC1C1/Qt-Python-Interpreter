@@ -12,8 +12,8 @@ namespace Lex
 {
     enum class TokenType {
         // 关键字
-        IF, ELSE, ELIF, WHILE, PRINT, INPUT, TRUE, FALSE, IN, For,
-        DEF, RETURN, CLASS,
+        IF, ELSE, ELIF, WHILE, PRINT, INPUT, TRUE, FALSE, IN, FOR,
+        DEF, RETURN, CLASS, BREAK, CONTINUE,
         // 标识符 (变量名,函数名)
         IDENTIFIER,
         // 字面量
@@ -56,7 +56,7 @@ namespace Lex
             case TokenType::DEDENT: os << "DEDENT"; break;
             case TokenType::IF: os << "IF"; break;
             case TokenType::IN: os << "IN"; break;
-            case TokenType::For: os << "FOR"; break;
+            case TokenType::FOR: os << "FOR"; break;
             case TokenType::ELSE: os << "ELSE"; break;
             case TokenType::ELIF: os << "ELIF"; break;
             case TokenType::WHILE: os << "WHILE"; break;
@@ -93,6 +93,8 @@ namespace Lex
             case TokenType::RETURN: os << "RETURN"; break;
             case TokenType::CLASS: os << "CLASS"; break;
             case TokenType::DOT: os << "DOT"; break;
+            case TokenType::BREAK: os << "BREAK"; break;
+            case TokenType::CONTINUE: os << "CONTINUE"; break;
             }
             os << ", '" << token.lexeme << "', line " << token.line << ")";
             return os;
@@ -105,7 +107,7 @@ namespace Lex
                 case TokenType::DEDENT:    return QString("DEDENT");
                 case TokenType::IF:        return QString("IF");
                 case TokenType::IN:        return QString("IN");
-                case TokenType::For:       return QString("FOR");
+                case TokenType::FOR:       return QString("FOR");
                 case TokenType::ELSE:      return QString("ELSE");
                 case TokenType::ELIF:      return QString("ELIF");
                 case TokenType::WHILE:     return QString("WHILE");
@@ -142,6 +144,8 @@ namespace Lex
                 case TokenType::RETURN:    return QString("RETURN");
                 case TokenType::CLASS:     return QString("CLASS");
                 case TokenType::DOT:       return QString("DOT");
+                case TokenType::BREAK:     return QString("BREAK");
+                case TokenType::CONTINUE:  return QString("CONTINUE");
                 default:                   return QString("UNKNOWN_TOKEN");
             }
         }
@@ -153,7 +157,7 @@ namespace Lex
                 case TokenType::DEDENT:    return QString("DEDENT");
                 case TokenType::IF:        return QString("IF");
                 case TokenType::IN:        return QString("IN");
-                case TokenType::For:       return QString("FOR");
+                case TokenType::FOR:       return QString("FOR");
                 case TokenType::ELSE:      return QString("ELSE");
                 case TokenType::ELIF:      return QString("ELIF");
                 case TokenType::WHILE:     return QString("WHILE");
@@ -190,6 +194,8 @@ namespace Lex
                 case TokenType::RETURN:    return QString("RETURN");
                 case TokenType::CLASS:     return QString("CLASS");
                 case TokenType::DOT:       return QString("DOT");
+                case TokenType::BREAK:     return QString("BREAK");
+                case TokenType::CONTINUE:  return QString("CONTINUE");
                 default:                   return QString("UNKNOWN_TOKEN");
             }
         }
@@ -214,10 +220,12 @@ namespace Lex
         {"and", TokenType::AND},
         {"not", TokenType::NOT},
         {"in", TokenType::IN},
-        {"for", TokenType::For},
+        {"for", TokenType::FOR},
         {"def", TokenType::DEF},
         {"return", TokenType::RETURN},
-        {"class", TokenType::CLASS}
+        {"class", TokenType::CLASS},
+        {"break", TokenType::BREAK},
+        {"continue", TokenType::CONTINUE},
     };
     // 我们拿到的程序是一大串由空格，缩进组成的文本，第一步是按照回车键分割字符串
     // 随后把每一行的字符串按照空格分隔，解析文本成token

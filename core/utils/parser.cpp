@@ -25,6 +25,25 @@ pointer Parser::parse(const std::vector<Lex::Token> &tokens)
     return ret;
 }
 
+pointer Parser::parseBlock(bool isNeedNewEnvir)
+{
+    consume(TokenType::INDENT, "需要缩进");
+    auto beginline = 0;
+    auto endline = 0;
+    QVector<pointer> statements;
+    while (!isAtEnd() && !check(TokenType::DEDENT)) {
+        statements.push_back(parseStatement());
+    }
+    if (!statements.isEmpty()) {
+        beginline = statements[0]->getLine();
+        endline = statements[statements.size() - 1]->getLine();
+    }
+    consume(TokenType::DEDENT, "缺少缩进");
+
+    return makeShared<Block>(statements, beginline, endline, isNeedNewEnvir);
+}
+
+
 pointer Parser::parseAssign()
 {
     size_t curr = current;
@@ -52,10 +71,20 @@ pointer Parser::parsePrint()
 
 pointer Parser::parseStatement()
 {
-    auto assign = parseAssign();
-    if (assign) return assign;
-    auto print = parsePrint();
-    if (print) return print;
+    auto assignStmt = parseAssign();
+    if (assignStmt) return assignStmt;
+    auto printStmt = parsePrint();
+    if (printStmt) return printStmt;
+    auto ifStmt = parseIfStmt();
+    if (ifStmt) return ifStmt;
+    auto whileStmt = parseWhile();
+    if (whileStmt) return whileStmt;
+    auto forStmt = parseFor();
+    if (forStmt) return forStmt;
+    auto breakStmt = parseBreak();
+    if (breakStmt) return breakStmt;
+    auto continueStmt = parseContinue();
+    if (continueStmt) return continueStmt;
     return parseExpression();
 }
 
@@ -100,6 +129,91 @@ pointer Parser::parseLValue()
         }
     }
     return ret;
+}
+
+pointer Parser::parseIfStmt()
+{
+    if (!match(TokenType::IF)) return nullptr;
+    auto line = getInstantLine();
+    auto condition = parseExpression();
+    if (!condition)  {
+        QString errMsg = QString(u8"If语句缺少条件, 行号: %1").arg(line);
+        throwErrorMsg(errMsg.toUtf8().data());
+    }
+    consume(TokenType::COLON, u8"if语句缺少冒号");
+    auto block = parseBlock(false);
+    QVector<pointer> elifs;
+    while (check(TokenType::ELIF)) {
+        auto elifstmt = parseElifStmt();
+        if (elifstmt)
+            elifs.push_back(elifstmt);
+    }
+    auto Else = parseElseStmt();
+
+    return makeShared<If>(line, block, condition, std::move(elifs), Else);
+}
+
+pointer Parser::parseElifStmt()
+{
+    if (!match(TokenType::ELIF)) return nullptr;
+    auto line = getInstantLine();
+    auto condition = parseExpression();
+    if (!condition)  {
+        QString errMsg = QString(u8"Elif语句缺少条件, 行号: %1").arg(line);
+        throwErrorMsg(errMsg.toUtf8().data());
+    }
+    consume(TokenType::COLON, u8"elif子句缺少冒号");
+    auto block = parseBlock(false);
+    return makeShared<If>(line, block, condition);
+}
+
+pointer Parser::parseElseStmt()
+{
+    if (!match(TokenType::ELSE)) return nullptr;
+    auto line = getInstantLine();
+    consume(TokenType::COLON, u8"else子句缺少冒号");
+    auto block = parseBlock(false);
+    return makeShared<If>(line, block);
+}
+
+pointer Parser::parseWhile()
+{
+    if (!match(TokenType::WHILE)) return nullptr;
+    auto line = getInstantLine();
+    auto condition = parseExpression();
+    if (!condition)
+        throwErrorMsg(QString(u8"while缺少条件, 行: %1").arg(line).toUtf8().data());
+    consume(TokenType::COLON, QString(u8"缺少的冒号, 行: %1").arg(line).toUtf8().data());
+    auto block = parseBlock(false);
+    if (!block)
+        throwErrorMsg(QString(u8"空语句块, 行: %1").arg(line).toUtf8().data());
+    return makeShared<While>(condition, block, line);
+}
+
+pointer Parser::parseFor()
+{
+    if (!match(TokenType::FOR)) return nullptr;
+    auto line = getInstantLine();
+    auto loopVar = parseLValue();
+    consume(TokenType::IN, u8"for语句需要in");
+    auto list = parseExpression();
+    consume(TokenType::COLON, u8"for语句缺少冒号");
+    auto block = parseBlock(false);
+    return makeShared<For>(loopVar, list, block, line);
+}
+
+pointer Parser::parseBreak()
+{
+    if (!match(TokenType::BREAK)) return nullptr;
+    auto line = getInstantLine();
+    return makeShared<Break>(line);
+}
+
+pointer Parser::parseContinue()
+{
+    if (!match(TokenType::CONTINUE)) return nullptr;
+    auto line = getInstantLine();
+    return makeShared<Continue>(line);
 }
 
 pointer Parser::parseExpression()

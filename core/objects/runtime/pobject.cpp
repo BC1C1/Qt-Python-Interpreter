@@ -177,6 +177,12 @@ PObject::pointer PObject::__iter__()
     return nullptr;
 }
 
+PObject::pointer PObject::__next__()
+{
+    defaultNoIterError();
+    return nullptr;
+}
+
 void PObject::__setitem__(const PObject::pointer&, PObject::pointer)
 {
     defaultNoSetItemError();
@@ -225,6 +231,11 @@ PObject::pointer PObject::defaultOpError(const QString &, const PObject::pointer
 PObject::pointer PObject::defaultNoIterError() const
 {
     throw runtime_error(u8"__iter__未实现");
+}
+
+PObject::pointer PObject::defaultNotIterError() const
+{
+    throw runtime_error(u8"该对象不是迭代器");
 }
 
 void PObject::defaultNoSetItemError() const

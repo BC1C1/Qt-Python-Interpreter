@@ -86,8 +86,9 @@ QJsonObject Variable::toJson() const
     return ret;
 }
 
-Block::Block(QVector<pointer> &statements, int beginline, int endline): ANode(NodeType::Block), statements(statements),
-    beginline(beginline), endline(endline)
+Block::Block(QVector<pointer> &statements, int beginline, int endline, bool isneed)
+    : ANode(NodeType::Block), statements(statements), isNeedNewEnvir(isneed),
+      beginline(beginline), endline(endline)
 {   
 }
 
@@ -102,6 +103,7 @@ QJsonObject Block::toJson() const
     ret["statements"] = array;
     ret["beginline"] = this->beginline;
     ret["endline"] = this->endline;
+    ret["isNeedNewEnvironment"] = this->isNeedNewEnvir;
     return ret;
 }
 
@@ -222,6 +224,124 @@ QJsonObject List::toJson() const
     }
     ret["elements"] = array;
     ret["line"] = this->getLine();
+    return ret;
+}
+
+QString NodeTypeToQString(NodeType type)
+{
+    // 使用 switch 语句匹配每个枚举值，返回对应的字符串
+    switch (type) {
+        case NodeType::Program:        return QString("Program");
+        case NodeType::Block:          return QString("Block");
+        case NodeType::Assignment:     return QString("Assignment");
+        case NodeType::If:             return QString("If");
+        case NodeType::Elif:           return QString("Elif");
+        case NodeType::Else:           return QString("Else");
+        case NodeType::While:          return QString("While");
+        case NodeType::For:            return QString("For");
+        case NodeType::Binary:         return QString("Binary");
+        case NodeType::Unary:          return QString("Unary");
+        case NodeType::Variable:       return QString("Variable");
+        case NodeType::Number:         return QString("Number");
+        case NodeType::Int:            return QString("Int");
+        case NodeType::Float:          return QString("Float");
+        case NodeType::String:         return QString("String");
+        case NodeType::List:           return QString("List");
+        case NodeType::Index:          return QString("Index");
+        case NodeType::Bool:           return QString("Bool");
+        case NodeType::Print:          return QString("Print");
+        case NodeType::FunctionDefine: return QString("FunctionDefine");
+        case NodeType::Return:         return QString("Return");
+        case NodeType::Call:           return QString("Call");
+        case NodeType::Attribute:      return QString("Attribute");
+        case NodeType::Class:          return QString("Class");
+        case NodeType::Break:          return QString("Break");
+        case NodeType::Continue:       return QString("Continue");
+        default:                       return QString("UnknownNodeType");
+    }
+}
+
+If::If(int line, pointer block, pointer condition, QVector<pointer> &&elifs, pointer Else)
+: ANode(NodeType::If, line), condition(condition), block(block), elifs(elifs), Else(Else)
+{
+
+}
+
+QJsonObject If::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "If";
+    ret["line"] = getLine();
+    if (condition)
+        ret["condition"] = condition->toJson();
+    if (block)
+        ret["ifTrueExecute"] = block->toJson();
+    QJsonArray array;
+    for (const auto& e : elifs) {
+        if (e)
+            array.append(e->toJson());
+    }
+    ret["elifs"] = array;
+    if (Else)
+        ret["else"] = Else->toJson();
+
+    return ret;
+}
+
+While::While(pointer condition, pointer block, int line) : ANode(NodeType::While, line),
+    condition(condition), block(block)
+{
+}
+
+QJsonObject While::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "While";
+    ret["condition"] = condition->toJson();
+    ret["toExecute"] = block->toJson();
+    ret["line"] = getLine();
+    return ret;
+}
+
+Break::Break(int line): ANode(NodeType::Break, line)
+{
+}
+
+QJsonObject Break::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "Break";
+    ret["line"] = getLine();
+    return ret;
+}
+
+Continue::Continue(int line): ANode(NodeType::Continue, line)
+{
+
+}
+
+QJsonObject Continue::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "Continue";
+    ret["line"] = getLine();
+    return ret;
+}
+
+For::For(pointer loopVar, pointer listObj, pointer block, int line): ANode(NodeType::For, line),
+   loopVar(loopVar), listObj(listObj), block(block)
+{
+
+}
+
+QJsonObject For::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "For";
+    ret["line"] = getLine();
+    ret["iterVar"] = loopVar->toJson();
+    ret["list"] = listObj->toJson();
+    ret["block"] = block->toJson();
     return ret;
 }
 

@@ -29,8 +29,13 @@ enum class NodeType {
     FunctionDefine,
     Return,
     Call,
-    Attribute, Class
+    Attribute,
+    Class,
+    Break,
+    Continue,
 };
+
+QString NodeTypeToQString(NodeType type);
 
 class ANode : public QEnableSharedFromThis<ANode>
 {
@@ -90,8 +95,9 @@ public:
 class Block : public ANode
 {
 public:
-    Block(QVector<pointer>& statements, int beginline, int endline);
+    Block(QVector<pointer>& statements, int beginline, int endline, bool isNeedNewEnvir = false);
     QVector<pointer> statements;
+    bool isNeedNewEnvir;
     int beginline;
     int endline;
     virtual QJsonObject toJson() const override;
@@ -157,7 +163,45 @@ public:
     std::vector<pointer> elements;
     virtual QJsonObject toJson() const override;
 };
+class If: public ANode {
+public:
+    If(int line = 0, pointer block = nullptr, pointer condition = nullptr,
+       QVector<pointer>&& elifs = QVector<pointer>(), pointer Else = nullptr);
+    pointer condition;
+    pointer block;
+    QVector<pointer> elifs;
+    pointer Else;
+    virtual QJsonObject toJson() const override;
+};
 
+class While: public ANode {
+public:
+    While(pointer condition, pointer block, int line = 0);
+    pointer condition;
+    pointer block;
+    virtual QJsonObject toJson() const override;
+};
+
+class Break: public ANode {
+public:
+    Break(int line = 0);
+    virtual QJsonObject toJson() const override;
+};
+
+class Continue: public ANode {
+public:
+    Continue(int line = 0);
+    virtual QJsonObject toJson() const override;
+};
+
+class For: public ANode {
+public:
+    For(pointer loopVar, pointer listObj, pointer block, int line);
+    pointer loopVar;
+    pointer listObj;
+    pointer block;
+    virtual QJsonObject toJson() const override;
+};
 }
 
 

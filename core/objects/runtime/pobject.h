@@ -69,6 +69,7 @@ public:
 
     // 获取迭代器
     virtual pointer __iter__();
+    virtual pointer __next__();
 
     // 内部元素
     virtual void __setitem__(const pointer& index, pointer obj);
@@ -88,6 +89,8 @@ protected:
     pointer defaultOpError(const QString& op, const pointer& other) const;
 
     pointer defaultNoIterError() const;
+
+    pointer defaultNotIterError() const;
 
     void defaultNoSetItemError() const;
 
