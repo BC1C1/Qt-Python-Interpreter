@@ -45,65 +45,65 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\qt\python\main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\mainwindow.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\ast\astnode.cpp">
-      <Filter>源文件\core\objects\ast</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\blockandframe.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\environment.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pbool.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pfloat.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pfunction.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pint.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\piterator.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\plist.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pnone.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pobject.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pstr.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\objects\runtime\pvm.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\utils\compiler.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\utils\functions.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\utils\lexer.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\qt\python\core\utils\parser.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
     <ClCompile Include="PClass.cpp">
       <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\compiler.cpp">
+      <Filter>源文件\core\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\lexer.cpp">
+      <Filter>源文件\core\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\parser.cpp">
+      <Filter>源文件\core\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\functions.cpp">
+      <Filter>源文件\core\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\ast\astnode.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\blockandframe.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\environment.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pbool.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pfloat.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pfunction.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pint.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\piterator.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\plist.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pnone.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pobject.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pstr.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pvm.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -112,64 +112,62 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="..\..\..\qt\python\core\objects\ast\astnode.h">
+    <QtMoc Include="core\utils\compiler.h">
+      <Filter>头文件\core\utils</Filter>
+    </QtMoc>
+    <QtMoc Include="core\utils\lexer.h">
+      <Filter>头文件\core\utils</Filter>
+    </QtMoc>
+    <QtMoc Include="core\utils\parser.h">
+      <Filter>头文件\core\utils</Filter>
+    </QtMoc>
+    <QtMoc Include="core\objects\runtime\environment.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </QtMoc>
+    <QtMoc Include="core\objects\runtime\pint.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </QtMoc>
+    <QtMoc Include="core\objects\runtime\pobject.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </QtMoc>
+    <QtMoc Include="core\objects\runtime\pvm.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </QtMoc>
+    <QtMoc Include="core\objects\ast\astnode.h">
       <Filter>头文件\core\objects\ast</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\blockandframe.h">
+    <QtMoc Include="core\objects\runtime\blockandframe.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\environment.h">
+    <QtMoc Include="core\objects\runtime\pbool.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pbool.h">
+    <QtMoc Include="PClass.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pfloat.h">
+    <QtMoc Include="core\objects\runtime\pfloat.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pfunction.h">
+    <QtMoc Include="core\objects\runtime\pfunction.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pint.h">
+    <QtMoc Include="core\objects\runtime\piterator.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\piterator.h">
+    <QtMoc Include="core\objects\runtime\plist.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\plist.h">
+    <QtMoc Include="core\objects\runtime\pnone.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pnone.h">
+    <QtMoc Include="core\objects\runtime\pstr.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pobject.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pvm.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\objects\runtime\pstr.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\utils\compiler.h">
+    <QtMoc Include="core\utils\functions.h">
       <Filter>头文件\core\utils</Filter>
     </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\utils\functions.h">
-      <Filter>头文件\core\utils</Filter>
-    </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\utils\lexer.h">
-      <Filter>头文件\core\utils</Filter>
-    </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\core\utils\parser.h">
-      <Filter>头文件\core\utils</Filter>
-    </QtMoc>
-    <QtMoc Include="..\..\..\qt\python\mainwindow.h">
+    <QtMoc Include="MainWindow.h">
       <Filter>头文件</Filter>
     </QtMoc>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="PClass.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>
