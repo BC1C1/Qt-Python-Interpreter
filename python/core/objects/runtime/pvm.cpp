@@ -10,6 +10,7 @@
 #include "core/objects/runtime/piterator.h"
 #include "core/objects/runtime/environment.h"
 #include "core/objects/runtime/pfunction.h"
+#include "PClass.h"
 namespace vm {
 PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), PC(0), isRunning(false)
 {
@@ -224,24 +225,34 @@ void PVM::executeSingleCode()
         auto params = popValue();
         auto newEnvir = createNewEnvironment(currEnvir());
         auto function = dynamicPointerCast<Py::PFunction>(caller);
-        auto param = dynamicPointerCast<Py::PList>(params);
-        if (param->size() != function->getParamsObj()->size()) {
-            throwErrMsg(u8"参数数量不匹配");
+        if (function) {
+            auto param = dynamicPointerCast<Py::PList>(params);
+            if (param->size() != function->getParamsObj()->size()) {
+                throwErrMsg(u8"参数数量不匹配");
+            }
+            // 新字节码
+            auto newCode = function->getCodeObj();
+            // 参数处理
+            auto pIter = params->__iter__();
+            auto fIter = function->getParamsObj()->__iter__();
+            auto NoneObj = makeShared<PNone>(); // 未来搞成全局对象
+            for (int i = 0; i < param->size(); i++) {
+                auto value1 = fIter->__next__();
+                newEnvir->assign(value1->toString(), pIter->__next__());
+            }
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            currCodes = newCode;
+            isGo = false;
+            PC = 0;
         }
-        // 新字节码
-        auto newCode = function->getCodeObj();
-        // 参数处理
-        auto pIter = params->__iter__();
-        auto fIter = function->getParamsObj()->__iter__();
-        auto NoneObj = makeShared<PNone>(); // 未来搞成全局对象
-        for (int i = 0; i < param->size(); i++) {
-            auto value1 = fIter->__next__();
-            newEnvir->assign(value1->toString(), pIter->__next__());
+        else {
+            auto classObj = dynamicPointerCast<Py::PClass>(caller);
+            if (!classObj) {
+                throwErrMsg(u8"无效的caller");
+            }
+            pushValue(classObj->__instance__(params, currEnvir()));
         }
-        callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
-        currCodes = newCode;
-        isGo = false;
-        PC = 0;
+
         //dumpStack("call end");
         break;
     }
@@ -254,6 +265,26 @@ void PVM::executeSingleCode()
         isGo = false;
         PC = frame.fromWhere;
         //dumpStack("return end");
+        break;
+    }
+    case Code::CREATE_CLASS: {
+        auto className = operand.toString();
+        auto staticNumber = popValue()->getValue().toInt();
+        QHash<QString, pointer> staticMembers;
+        for (int i = 0; i < staticNumber; i++) {
+            auto varName = popValue()->getValue().toString();
+            auto obj = popValue();
+            staticMembers[varName] = obj;
+        }
+        auto functionsNumber = popValue()->getValue().toInt();
+        QHash<QString, pointer> functions;
+        for (int i = 0; i < functionsNumber; i++) {
+            auto functionName = popValue()->getValue().toString();
+            auto functionobj = popValue();
+            functions[functionName] = functionobj;
+        }
+        auto classObj = makeShared<Py::PClass>(className, functions, staticMembers);
+        currEnvir()->assign(operand.toString(), classObj);
         break;
     }
     case Code::ADD: {
@@ -498,7 +529,7 @@ QString CodeToQString(Code code)
 
     case Code::LOOP_START_FOR:  return "LOOP_START_FOR";
     case Code::LOOP_START_WHILE:return "LOOP_START_WHILE";
-    case Code::CONTINUE:        return "CONTINUE"; // 你拼写是这样的
+    case Code::CONTINUE:        return "CONTINUE"; 
     case Code::BREAK:           return "BREAK";
     case Code::LOOP_FOR_END:    return "LOOP_FOR_END";
     case Code::LOOP_WHILE_END:  return "LOOP_WHILE_END";
@@ -525,6 +556,7 @@ QString CodeToQString(Code code)
     case Code::HALT:            return "HALT";
     case Code::INVALID:         return "INVALID";
     case Code::CREATE_FUNCTION: return "CREATE_FUNCTION";
+    case Code::CREATE_CLASS:    return "CREATE_CLASS";
 
     default:                    return "UNKNOWN_CODE";
     }

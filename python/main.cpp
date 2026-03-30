@@ -27,12 +27,9 @@ using Compile::Compiler;
 int main(int argc, char *argv[])
 {
     std::string code1 = R"(
-x = 1
-def A():
-    def B():
-        return x
-    return B
-print(A()())
+class test:
+    def __init__():
+        this.a = a
 )";
 
     try {

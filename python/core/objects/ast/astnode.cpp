@@ -374,4 +374,26 @@ QJsonObject Return::toJson() const
     return ret;
 }
 
+Class::Class(QVector<pointer>& functions, QString& className, QVector<pointer>& staticMemebers, int line)
+    : ANode(NodeType::Class, line), functions(functions), className(className), staticMembers(staticMemebers)
+{
+}
+
+QJsonObject Class::toJson() const
+{
+    QJsonObject ret;
+    ret["className"] = className;
+    QJsonArray arr1;
+    for (const auto& f : functions) {
+        arr1.append(f->toJson());
+    }
+    ret["functions"] = arr1;
+    QJsonArray arr2;
+    for (const auto m : staticMembers) {
+        arr2.append(m->toJson());
+    }
+    ret["staticMembers"] = arr2;
+    return ret;
+}
+
 }

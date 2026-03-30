@@ -31,6 +31,7 @@ void Compiler::compileBlock(APointer node)
         throw std::runtime_error(u8"无效的block");
     }
     compileFunctions(node);
+    compileClasses(node);
     for (const auto& s : block->statements) {
         compileStatement(s);
     }
@@ -65,6 +66,63 @@ void Compiler::compileFunctions(APointer node)
         code.push_back(Instruction{Code::RETURN});
         cache.push_back(Instruction{Code::CREATE_FUNCTION, codeByte});
         cache.push_back(Instruction{Code::STORE_VAR, name});
+    }
+}
+
+void Compiler::compileFunctionInClass(APointer node)
+{
+    auto functionStmt = dynamicPointerCast<Parse::Function>(node);
+    auto name = QString::fromStdString(functionStmt->functionName);
+    auto params = dynamicPointerCast<Parse::List>(functionStmt->params);
+    auto block = functionStmt->block;
+
+    cache.push_back(Instruction{ Code::LOAD_STRING, name }); // name
+    for (const auto& e : params->elements) {
+        auto eObj = dynamicPointerCast<Parse::Variable>(e);
+        if (eObj)
+            cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(eObj->name) });
+        else
+            throw std::runtime_error("无效的函数参数");
+    }
+    cache.push_back(Instruction{ Code::LOAD_INT, params->elements.size() });
+    cache.push_back(Instruction{ Code::LOAD_LIST }); // params
+    Compiler compiler;
+    compiler.setAst(block);
+    compiler.compileAST();
+    auto code = compiler.cache;
+    auto codeByte = Instruction::toByteArray(code);
+    code.push_back(Instruction{ Code::RETURN });
+    cache.push_back(Instruction{ Code::CREATE_FUNCTION, codeByte });
+    cache.push_back(Instruction{ Code::LOAD_STRING, name });
+    //cache.push_back(Instruction{ Code::STORE_VAR, name });
+}
+
+void Compiler::compileClasses(APointer node)
+{
+    auto block = dynamicPointerCast<Parse::Block>(node);
+    for (const auto& s : block->statements) {
+        if (s->getType() != NodeType::Class)
+            continue;
+        auto classDefine = dynamicPointerCast<Parse::Class>(s);
+        auto& name = classDefine->className;
+        auto& functions = classDefine->functions;
+        auto& staticMembers = classDefine->staticMembers;
+        for (const auto& f : functions) {
+            compileFunctionInClass(f);
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, functions.size() });
+        cache.push_back(Instruction{ Code::LOAD_LIST });
+        for (const auto& assign : staticMembers) {
+            auto assignStmt = dynamicPointerCast<Parse::Assignment>(assign);
+            compileExpression(assignStmt->right);
+            if (assignStmt->left->getType() != NodeType::Variable)
+                throw std::runtime_error(u8"意外的赋值");
+            auto& varName = dynamicPointerCast<Parse::Variable>(assignStmt->left)->name;
+            cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(varName) });
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, staticMembers.size() });
+        cache.push_back(Instruction{ Code::CREATE_CLASS, name }); // 这条指令会做你说的在当前环境赋值
+
     }
 }
 
@@ -220,6 +278,7 @@ void Compiler::compileStatement(APointer node)
             auto attr = dynamicPointerCast<Parse::Attribute>(assignment->left);
             auto attrName = QString::fromStdString(attr->attributeName);
             cache.push_back(Instruction{Code::STORE_ATTR, attrName});
+            break;
         }
         default: {
             throwErrorLine(assignment->getLine());
@@ -392,6 +451,9 @@ void Compiler::compileStatement(APointer node)
         auto expression = returnStmt->expression;
         compileExpression(expression);
         cache.push_back(Instruction{Code::RETURN});
+        break;
+    }
+    case NodeType::Class: {
         break;
     }
     default:

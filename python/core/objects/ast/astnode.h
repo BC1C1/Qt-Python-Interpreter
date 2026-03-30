@@ -218,6 +218,14 @@ public:
     pointer expression;
     QJsonObject toJson() const override;
 };
+class Class : public ANode {
+public:
+    Class(QVector<pointer>& functions, QString& className, QVector<pointer>& staticMemebers, int line);
+    QVector<pointer> functions;
+    QString className;
+    QVector<pointer> staticMembers;
+    QJsonObject toJson() const override;
+};
 }
 
 

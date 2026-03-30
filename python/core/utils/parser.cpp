@@ -71,6 +71,8 @@ pointer Parser::parsePrint()
 
 pointer Parser::parseStatement()
 {
+    auto classDefine = parseClass();
+    if (classDefine) return classDefine;
     auto function = parseFunction();
     if (function) return function;
     auto assignStmt = parseAssign();
@@ -250,6 +252,38 @@ pointer Parser::parseReturn()
     int line = getInstantLine();
     auto expression = parseExpression();
     return makeShared<Parse::Return>(expression, line);
+}
+
+pointer Parser::parseClass()
+{
+    if (!match(TokenType::CLASS)) return nullptr;
+    int line = getInstantLine();
+    QString className;
+    if (getTokens()[current].type == TokenType::IDENTIFIER) {
+        auto& classStdName = getTokens()[current].lexeme;
+        className = QString::fromStdString(classStdName);
+    }
+    else {
+        throwErrorMsg(u8"错误的类名");
+    }
+    current++;
+    consume(TokenType::COLON, u8"类定义缺少冒号");
+    auto block = parseBlock(true);
+    auto blockNode = dynamicPointerCast<Block>(block);
+    QVector<pointer> functions;
+    QVector<pointer> assignments;
+    for (const auto& s : blockNode->statements) {
+        if (s->getType() == NodeType::Assignment) {
+            assignments.push_back(s);
+        } 
+        else if (s->getType() == NodeType::FunctionDefine) {
+            functions.push_back(s);
+        }
+        else {
+            throwErrorMsg(u8"不允许的语句");
+        }
+    }
+    return makeShared<Class>(functions, className, assignments, line);
 }
 
 pointer Parser::parseExpression()

@@ -33,6 +33,8 @@ public:
 private:
     void compileBlock(APointer node);
     void compileFunctions(APointer node);
+    void compileFunctionInClass(APointer node);
+    void compileClasses(APointer node);
 
     void compileLeftValue(APointer node);
     void compileExpression(APointer node);

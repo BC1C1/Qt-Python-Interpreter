@@ -53,6 +53,10 @@ enum class Code: char {
     RETURN,
     CALL,
 
+    // 类定义
+    CREATE_CLASS,
+    STORE_CLASS_VAR,
+
     // 算数
     ADD,
     SUB,

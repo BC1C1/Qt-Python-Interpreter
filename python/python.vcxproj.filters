@@ -105,6 +105,9 @@
     <ClCompile Include="MainWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="PInstance.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="..\..\..\qt\python\mainwindow.ui">
@@ -133,16 +136,10 @@
     <QtMoc Include="core\objects\runtime\pvm.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="core\objects\ast\astnode.h">
-      <Filter>头文件\core\objects\ast</Filter>
-    </QtMoc>
     <QtMoc Include="core\objects\runtime\blockandframe.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\pbool.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="PClass.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\pfloat.h">
@@ -152,9 +149,6 @@
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\piterator.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="core\objects\runtime\plist.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\pnone.h">
@@ -169,5 +163,19 @@
     <QtMoc Include="MainWindow.h">
       <Filter>头文件</Filter>
     </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PClass.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="core\objects\ast\astnode.h">
+      <Filter>头文件\core\objects\ast</Filter>
+    </ClInclude>
+    <ClInclude Include="PInstance.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="core\objects\runtime\plist.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
