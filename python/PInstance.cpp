@@ -3,7 +3,7 @@
 #include "PClass.h"
 
 namespace Py {
-	PInstance::PInstance(EPointer envir, PClass* classObj) : PObject(typeMap.at(Type::Class)),
+	PInstance::PInstance(EPointer envir, PClass* classObj) : PObject(typeMap.at(Type::Instance)),
 		classObj(classObj)
 	{
 		auto& classStaticMembers = classObj->getStaticMembers();

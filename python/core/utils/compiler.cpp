@@ -16,6 +16,8 @@ QVector<Instruction> Compiler::compileAST()
 {
     cache.clear();
     try {
+        compileFunctions(ast);
+        compileClasses(ast);
         compileBlock(ast);
     } catch (...) {
         throw;
@@ -30,8 +32,6 @@ void Compiler::compileBlock(APointer node)
     if (!node) {
         throw std::runtime_error(u8"无效的block");
     }
-    compileFunctions(node);
-    compileClasses(node);
     for (const auto& s : block->statements) {
         compileStatement(s);
     }
@@ -64,6 +64,7 @@ void Compiler::compileFunctions(APointer node)
         auto code = compiler.cache;
         auto codeByte = Instruction::toByteArray(code);
         code.push_back(Instruction{Code::RETURN});
+        cache.push_back(Instruction{ Code::LOAD_FALSE });
         cache.push_back(Instruction{Code::CREATE_FUNCTION, codeByte});
         cache.push_back(Instruction{Code::STORE_VAR, name});
     }
@@ -89,9 +90,11 @@ void Compiler::compileFunctionInClass(APointer node)
     Compiler compiler;
     compiler.setAst(block);
     compiler.compileAST();
-    auto code = compiler.cache;
-    auto codeByte = Instruction::toByteArray(code);
+    auto& code = compiler.cache;
+    code.pop_back();
     code.push_back(Instruction{ Code::RETURN });
+    auto codeByte = Instruction::toByteArray(code);
+    cache.push_back(Instruction{ Code::LOAD_TRUE });
     cache.push_back(Instruction{ Code::CREATE_FUNCTION, codeByte });
     cache.push_back(Instruction{ Code::LOAD_STRING, name });
     //cache.push_back(Instruction{ Code::STORE_VAR, name });
@@ -111,18 +114,16 @@ void Compiler::compileClasses(APointer node)
             compileFunctionInClass(f);
         }
         cache.push_back(Instruction{ Code::LOAD_INT, functions.size() });
-        cache.push_back(Instruction{ Code::LOAD_LIST });
         for (const auto& assign : staticMembers) {
             auto assignStmt = dynamicPointerCast<Parse::Assignment>(assign);
             compileExpression(assignStmt->right);
             if (assignStmt->left->getType() != NodeType::Variable)
                 throw std::runtime_error(u8"意外的赋值");
             auto& varName = dynamicPointerCast<Parse::Variable>(assignStmt->left)->name;
-            cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(varName) });
+            //cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(varName) });
         }
         cache.push_back(Instruction{ Code::LOAD_INT, staticMembers.size() });
-        cache.push_back(Instruction{ Code::CREATE_CLASS, name }); // 这条指令会做你说的在当前环境赋值
-
+        cache.push_back(Instruction{ Code::CREATE_CLASS, name }); 
     }
 }
 
@@ -175,7 +176,9 @@ void Compiler::compileExpression(APointer node)
     }
     case NodeType::Attribute: {
         auto attrNode = dynamicPointerCast<Parse::Attribute>(node);
+        QString attrName = QString::fromStdString(attrNode->attributeName);
         compileExpression(attrNode->caller);
+        cache.push_back(Instruction{ Code::LOAD_ATTR, attrName });
         break;
     }
     case NodeType::Int: {
@@ -234,13 +237,22 @@ void Compiler::compileExpression(APointer node)
     }
     case NodeType::Call: {
         auto callStmt = dynamicPointerCast<Parse::Call>(node);
+        auto& left = callStmt->caller;
+        bool flag = false;
+        if (left->getType() == NodeType::Attribute) {
+            flag = true;
+        }
+        if (flag) {
+            compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller); 
+        }
         for (const auto& e : callStmt->params) {
             compileExpression(e);
         }
-        cache.push_back(Instruction{Code::LOAD_INT, callStmt->params.size()});
-        cache.push_back(Instruction{Code::LOAD_LIST});
+        auto size = flag ? callStmt->params.size() + 1 : callStmt->params.size();
+        cache.push_back(Instruction{ Code::LOAD_INT, size });
+        cache.push_back(Instruction{ Code::LOAD_LIST });
         compileExpression(callStmt->caller);
-        cache.push_back(Instruction{Code::CALL});
+        cache.push_back(Instruction{ Code::CALL });
         break;
     }
     default:{

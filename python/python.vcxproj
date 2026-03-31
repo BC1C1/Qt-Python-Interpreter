@@ -178,7 +178,7 @@
     <QtMoc Include="core\objects\runtime\blockandframe.h" />
     <QtMoc Include="core\objects\runtime\pbool.h" />
     <QtMoc Include="core\objects\runtime\pfloat.h" />
-    <QtMoc Include="core\objects\runtime\pfunction.h" />
+    <ClInclude Include="core\objects\runtime\pfunction.h" />
     <QtMoc Include="core\objects\runtime\piterator.h" />
     <ClInclude Include="core\objects\runtime\plist.h" />
     <QtMoc Include="core\objects\runtime\pnone.h" />

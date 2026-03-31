@@ -34,11 +34,6 @@ namespace Py {
 	pointer PClass::__instance__(const pointer& params, QSharedPointer<Environment> envir)
 	{
 		auto obj = makeShared<PInstance>(envir, this);
-		QVector<pointer> param = { obj };
-		auto list = dynamicPointerCast<PList>(params);
-		param.append(list->getTrueValue());
-		auto newParam = makeShared<PList>(param);
-		functions["__init__"]->__call__(newParam, envir);
 		return obj;
 	}
 	void PClass::__setattribute__(const QString& attrName, const pointer& obj)
@@ -68,6 +63,10 @@ namespace Py {
 		}
 		Py::PObject::__getattribute__(attrName);
 		return nullptr;
+	}
+	pointer PClass::__call__(const pointer& params, QSharedPointer<Environment> envir)
+	{
+		return __instance__(params, envir);
 	}
 	MemberMap& PClass::getFunctions()
 	{

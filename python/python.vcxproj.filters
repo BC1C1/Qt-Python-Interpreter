@@ -145,9 +145,6 @@
     <QtMoc Include="core\objects\runtime\pfloat.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="core\objects\runtime\pfunction.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
     <QtMoc Include="core\objects\runtime\piterator.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
@@ -175,6 +172,9 @@
       <Filter>头文件\core\objects\runtime</Filter>
     </ClInclude>
     <ClInclude Include="core\objects\runtime\plist.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="core\objects\runtime\pfunction.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </ClInclude>
   </ItemGroup>

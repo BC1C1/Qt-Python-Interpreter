@@ -10,6 +10,7 @@
 #include "core/objects/runtime/piterator.h"
 #include "core/objects/runtime/environment.h"
 #include "core/objects/runtime/pfunction.h"
+#include "PInstance.h"
 #include "PClass.h"
 namespace vm {
 PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), PC(0), isRunning(false)
@@ -51,6 +52,14 @@ void PVM::executeSingleCode()
         pushValue(makeShared<PInt>(value));
         break;
     }
+    case Code::LOAD_TRUE: {
+        pushValue(makeShared<PBool>(true));
+        break;
+    }
+    case Code::LOAD_FALSE: {
+        pushValue(makeShared<PBool>(false));
+        break;
+    }
     case Code::LOAD_FLOAT: {
         double value = operand.toDouble();
         pushValue(makeShared<PFloat>(value));
@@ -85,9 +94,10 @@ void PVM::executeSingleCode()
         auto obj = currEnvir()->getObj(name);
         if (!obj)
             qDebug() << "obj is nullptr";
-        qDebug() << "obj.name is" << name << "\nobj.type is"
-                 << TypeToString(obj->getType().type)
-                 << "obj.value is(toString)" << obj->toString();
+        else
+            qDebug() << "obj.name is" << name << "\nobj.type is"
+                    << TypeToString(obj->getType().type)
+                    << "obj.value is(toString)" << obj->toString();
         if (obj)
             pushValue(obj);
         if (!obj) {
@@ -106,6 +116,7 @@ void PVM::executeSingleCode()
     case Code::LOAD_ATTR: {
         auto toAttr = popValue();
         auto attrName = operand.toString();
+        qDebug() << "value of toAttr is: " << toAttr->toString();
         auto obj = toAttr->__getattribute__(attrName);
         pushValue(obj);
         break;
@@ -114,8 +125,8 @@ void PVM::executeSingleCode()
         auto left = operand.toString();
         auto right = popValue();
         currEnvir()->assign(left, right);
-        //        qDebug() << "var name : " << left << "get value: " << right->toString();
-        //        qDebug() << "var type is:" << TypeToString(right->getType().type);
+                qDebug() << "var name : " << left << "get value: " << right->toString();
+                qDebug() << "var type is:" << TypeToString(right->getType().type);
         break;
     }
     case Code::STORE_INDEX: {
@@ -208,9 +219,10 @@ void PVM::executeSingleCode()
     }
     case Code::CREATE_FUNCTION: {
         auto code = operand.toByteArray();
+        auto isClassFunction = popValue()->getValue().toBool(); 
         auto params = popValue();
         auto name = popValue();
-        auto functionObj = makeShared<Py::PFunction>(params, code, name);
+        auto functionObj = makeShared<Py::PFunction>(params, code, name, isClassFunction);
         pushValue(functionObj);
         qDebug() << "以下是函数内部字节码";
         for (const auto& innerCode : Instruction::fromByteArray(code)) {
@@ -221,36 +233,48 @@ void PVM::executeSingleCode()
     }
     case Code::CALL: {
         //dumpStack("call begin");
-        auto caller = popValue();
+        auto caller = popValue(); // 这个caller是函数
+        qDebug() << "caller.type is: " << TypeToString(caller->getType().type);
+        qDebug() << "caller.value is(toString): " << caller->toString();
         auto params = popValue();
         auto newEnvir = createNewEnvironment(currEnvir());
-        auto function = dynamicPointerCast<Py::PFunction>(caller);
-        if (function) {
-            auto param = dynamicPointerCast<Py::PList>(params);
-            if (param->size() != function->getParamsObj()->size()) {
-                throwErrMsg(u8"参数数量不匹配");
-            }
-            // 新字节码
+        switch (caller->getType().type)
+        {
+        case Type::FunctionDefine: {
+            auto function = dynamicPointerCast<Py::PFunction>(caller);
+            caller->__call__(params, newEnvir);
             auto newCode = function->getCodeObj();
-            // 参数处理
-            auto pIter = params->__iter__();
-            auto fIter = function->getParamsObj()->__iter__();
-            auto NoneObj = makeShared<PNone>(); // 未来搞成全局对象
-            for (int i = 0; i < param->size(); i++) {
-                auto value1 = fIter->__next__();
-                newEnvir->assign(value1->toString(), pIter->__next__());
-            }
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
+            break;
         }
-        else {
+        case Type::Class: {
             auto classObj = dynamicPointerCast<Py::PClass>(caller);
             if (!classObj) {
                 throwErrMsg(u8"无效的caller");
             }
-            pushValue(classObj->__instance__(params, currEnvir()));
+            for (const auto& p : classObj->getFunctions()) {
+                qDebug() << p->toString();
+            }
+            auto obj = classObj->__call__(params, newEnvir);
+            pushValue(obj); // 先压入栈，后面的是闭合操作，会把操作数栈顶重新变回obj，就能return回去
+            auto param = dynamicPointerCast<PList>(params);
+            auto initFunc = classObj->getFunctions()["__init__"];
+            QVector<pointer> p = { obj };
+            p.append(param->getTrueValue());
+            initFunc->__call__(makeShared<PList>(p), newEnvir);
+            auto initFObj = dynamicPointerCast<PFunction>(initFunc);
+            auto newCode = initFObj->getCodeObj();
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            currCodes = newCode;
+            isGo = false;
+            PC = 0;
+            break;
+        }
+        default:
+            break;
         }
 
         //dumpStack("call end");
@@ -512,6 +536,8 @@ QString CodeToQString(Code code)
     case Code::LOAD_STRING:     return "LOAD_STRING";
     case Code::LOAD_LIST:       return "LOAD_LIST";
     case Code::LOAD_NONE:       return "LOAD_NONE";
+    case Code::LOAD_TRUE:       return "LOAD_TRUE";
+    case Code::LOAD_FALSE:      return "LOAD_FALSE";
 
     case Code::LOAD_NAME:       return "LOAD_NAME";
     case Code::LOAD_INDEX:      return "LOAD_INDEX";
@@ -696,6 +722,7 @@ Code QStringToCode(QString string)
         {"PRINT",           Code::PRINT},
         {"HALT",            Code::HALT},
         {"INVALID",         Code::INVALID},
+        
     };
 
     auto it = map.find(string);

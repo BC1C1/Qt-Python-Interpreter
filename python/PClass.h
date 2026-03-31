@@ -16,6 +16,7 @@ namespace Py {
 		virtual pointer __instance__(const pointer& params, QSharedPointer<Environment> envir) override;
 		virtual void __setattribute__(const QString& atrrName, const pointer& obj) override;
 		virtual pointer __getattribute__(const QString& attrName) override;
+		virtual pointer __call__(const pointer& params, QSharedPointer<Environment> envir) override;
 		MemberMap& getFunctions();
 		MemberMap& getStaticMembers();
 

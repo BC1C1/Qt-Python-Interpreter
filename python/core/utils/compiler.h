@@ -31,6 +31,7 @@ public:
     void setAst(APointer ast);
     QVector<Instruction> compileAST();
 private:
+    void compileFunctionsAndClasses(APointer node, bool isfunction = false);
     void compileBlock(APointer node);
     void compileFunctions(APointer node);
     void compileFunctionInClass(APointer node);

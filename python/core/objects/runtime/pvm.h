@@ -16,6 +16,8 @@ namespace vm {
 enum class Code: char {
     // 加载字面量
     LOAD_INT,           // need 数字           栈：[] → [值]
+    LOAD_TRUE,
+    LOAD_FALSE,
     LOAD_FLOAT,         // need 数字           栈：[] → [值]
     LOAD_STRING,        // need 字符串         栈：[] → [值]
     LOAD_LIST,          //                    栈：[] → [值]

@@ -28,8 +28,12 @@ int main(int argc, char *argv[])
 {
     std::string code1 = R"(
 class test:
-    def __init__():
-        this.a = a
+    def __init__(self, a):
+        self.a = a
+    def add(self, b):
+        return self.a + b
+t = test(1)
+print(t.add(2))
 )";
 
     try {
@@ -71,8 +75,10 @@ class test:
         Compiler compiler;
         compiler.setAst(ast);
         auto instrucntions = compiler.compileAST();
+        int cnt = 0;
         for (const auto& ins : instrucntions) {
-            qDebug() << ins.toString();
+            qDebug() << "Line: " << cnt << ins.toString();
+            cnt++;
         }
 
         qDebug() << "\n<---------- compile success ---------->";
