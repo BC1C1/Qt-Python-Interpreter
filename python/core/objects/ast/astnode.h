@@ -96,7 +96,7 @@ public:
 class Block : public ANode
 {
 public:
-    Block(QVector<pointer>& statements, int beginline, int endline, bool isNeedNewEnvir = false);
+    Block(const QVector<pointer>& statements, int beginline, int endline, bool isNeedNewEnvir = false);
     QVector<pointer> statements;
     bool isNeedNewEnvir;
     int beginline;
@@ -221,10 +221,17 @@ public:
 };
 class Class : public ANode {
 public:
-    Class(QVector<pointer>& functions, QString& className, QVector<pointer>& staticMemebers, int line);
+    Class(
+        QVector<pointer>& functions, 
+        QString& className, 
+        QVector<pointer>& staticMemebers,
+        QVector<pointer>&& parents,
+        int line
+    );
     QVector<pointer> functions;
     QString className;
     QVector<pointer> staticMembers;
+    QVector<pointer> parents;
     QJsonObject toJson() const override;
 };
 class Dict : public ANode {

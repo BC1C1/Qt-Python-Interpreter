@@ -126,6 +126,7 @@ public:
     void start();
     void stop();
     void run();
+    ~PVM();
 private:
     void executeSingleCode();
     void pushValue(pointer object);
@@ -146,6 +147,9 @@ private:
     bool isRunning;
     ValueStack valueStack;
     ValueStack funcStack;
+    PClass* object = nullptr;
+private:
+    void initRootObject();
 //    EPointer currEnvir;
 //    EPointer defaultEnvir;
     BlockFrameStack blockFrameStack;

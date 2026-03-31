@@ -86,7 +86,7 @@ QJsonObject Variable::toJson() const
     return ret;
 }
 
-Block::Block(QVector<pointer> &statements, int beginline, int endline, bool isneed)
+Block::Block(const QVector<pointer> &statements, int beginline, int endline, bool isneed)
     : ANode(NodeType::Block), statements(statements), isNeedNewEnvir(isneed),
       beginline(beginline), endline(endline)
 {   
@@ -376,8 +376,17 @@ QJsonObject Return::toJson() const
     return ret;
 }
 
-Class::Class(QVector<pointer>& functions, QString& className, QVector<pointer>& staticMemebers, int line)
-    : ANode(NodeType::Class, line), functions(functions), className(className), staticMembers(staticMemebers)
+Class::Class(
+    QVector<pointer>& functions, 
+    QString& className, 
+    QVector<pointer>& staticMemebers, 
+    QVector<pointer>&& parents,
+    int line) : 
+    ANode(NodeType::Class, line), 
+    functions(functions), 
+    className(className), 
+    staticMembers(staticMemebers),
+    parents(parents)
 {
 }
 
@@ -392,11 +401,16 @@ QJsonObject Class::toJson() const
     }
     ret["functions"] = arr1;
     QJsonArray arr2;
-    for (const auto m : staticMembers) {
+    for (const auto& m : staticMembers) {
         arr2.append(m->toJson());
     }
     ret["staticMembers"] = arr2;
     ret["line"] = getLine();
+    QJsonArray arr3;
+    for (const auto& p : parents) {
+        arr3.append(p->toJson());
+    }
+    ret["parents"] = arr3;
     return ret;
 }
 

@@ -28,6 +28,16 @@ pointer Parser::parse(const std::vector<Lex::Token> &tokens)
 pointer Parser::parseBlock(bool isNeedNewEnvir)
 {
     consume(TokenType::INDENT, "需要缩进");
+    if (match(TokenType::PASS)) {
+       auto result = makeShared<Block>(
+            QVector<pointer>(),
+            getInstantLine(),
+            getInstantLine(),
+            isNeedNewEnvir);
+       current++; // 跳过dedent
+       return result;
+    }
+
     auto beginline = 0;
     auto endline = 0;
     QVector<pointer> statements;
@@ -267,6 +277,19 @@ pointer Parser::parseClass()
         throwErrorMsg(u8"错误的类名");
     }
     current++;
+    QVector<pointer> parents;
+    if (match(TokenType::LPAREN)) {
+        do {
+            if (check(TokenType::RPAREN))
+                break;
+            auto p = parsePrimary();
+            if (p)
+                parents.append(p);
+            else
+                throwErrorMsg(u8"无效的父类");
+        } while (match(TokenType::COMMA));
+        consume(TokenType::RPAREN, u8"缺少右括号");
+    }
     consume(TokenType::COLON, u8"类定义缺少冒号");
     auto block = parseBlock(true);
     auto blockNode = dynamicPointerCast<Block>(block);
@@ -283,7 +306,7 @@ pointer Parser::parseClass()
             throwErrorMsg(u8"不允许的语句");
         }
     }
-    return makeShared<Class>(functions, className, assignments, line);
+    return makeShared<Class>(functions, className, assignments, std::move(parents), line);
 }
 
 pointer Parser::parseExpression()

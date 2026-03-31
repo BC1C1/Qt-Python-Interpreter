@@ -13,7 +13,7 @@ namespace Lex
     enum class TokenType {
         // 关键字
         IF, ELSE, ELIF, WHILE, PRINT, INPUT, TRUE, FALSE, IN, FOR,
-        DEF, RETURN, CLASS, BREAK, CONTINUE,
+        DEF, RETURN, CLASS, BREAK, CONTINUE, PASS,
         // 标识符 (变量名,函数名)
         IDENTIFIER,
         // 字面量
@@ -196,6 +196,7 @@ namespace Lex
                 case TokenType::DOT:       return QString("DOT");
                 case TokenType::BREAK:     return QString("BREAK");
                 case TokenType::CONTINUE:  return QString("CONTINUE");
+                case TokenType::PASS:      return QString("PASS");
                 default:                   return QString("UNKNOWN_TOKEN");
             }
         }
@@ -226,6 +227,7 @@ namespace Lex
         {"class", TokenType::CLASS},
         {"break", TokenType::BREAK},
         {"continue", TokenType::CONTINUE},
+        {"pass", TokenType::PASS},
     };
     // 我们拿到的程序是一大串由空格，缩进组成的文本，第一步是按照回车键分割字符串
     // 随后把每一行的字符串按照空格分隔，解析文本成token

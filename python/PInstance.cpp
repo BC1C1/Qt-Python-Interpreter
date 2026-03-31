@@ -37,13 +37,12 @@ namespace Py {
 		if (iter != this->privateMembers.end()) {
 			return iter.value();
 		}
-		auto& functions = classObj->getFunctions();
-		iter = functions.find(attrName);
-		if (iter != functions.end()) {
-			return iter.value();
-		}
-
-		return nullptr; 
+		//auto& functions = classObj->getFunctions();
+		//iter = functions.find(attrName);
+		//if (iter != functions.end()) {
+		//	return iter.value();
+		//}
+		return classObj->__getattribute__(attrName);
 	}
 	pointer PInstance::__eq__(const pointer& other) const
 	{

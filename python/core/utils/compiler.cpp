@@ -33,6 +33,7 @@ void Compiler::compileBlock(APointer node)
         throw std::runtime_error(u8"无效的block");
     }
     for (const auto& s : block->statements) {
+        auto type = s->getType();
         compileStatement(s);
     }
 }
@@ -110,19 +111,28 @@ void Compiler::compileClasses(APointer node)
         auto& name = classDefine->className;
         auto& functions = classDefine->functions;
         auto& staticMembers = classDefine->staticMembers;
+        auto& parents = classDefine->parents;
+        // 1. functions list
         for (const auto& f : functions) {
             compileFunctionInClass(f);
         }
         cache.push_back(Instruction{ Code::LOAD_INT, functions.size() });
+        // 2. staticMembers list
         for (const auto& assign : staticMembers) {
             auto assignStmt = dynamicPointerCast<Parse::Assignment>(assign);
             compileExpression(assignStmt->right);
             if (assignStmt->left->getType() != NodeType::Variable)
                 throw std::runtime_error(u8"意外的赋值");
             auto& varName = dynamicPointerCast<Parse::Variable>(assignStmt->left)->name;
-            //cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(varName) });
+            cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(varName) });
         }
         cache.push_back(Instruction{ Code::LOAD_INT, staticMembers.size() });
+        // 3. parents
+        for (const auto& p : parents) {
+            compileExpression(p);
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, parents.size() });
+        // 4. create class
         cache.push_back(Instruction{ Code::CREATE_CLASS, name }); 
     }
 }
@@ -248,20 +258,20 @@ void Compiler::compileExpression(APointer node)
     case NodeType::Call: {
         auto callStmt = dynamicPointerCast<Parse::Call>(node);
         auto& left = callStmt->caller;
-        bool flag = false;
-        if (left->getType() == NodeType::Attribute) {
-            flag = true;
-        }
-        if (flag) {
-            compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller); 
-        }
+        // 1.
+        if (left->getType() == NodeType::Attribute)
+            compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller);
+        else
+            cache.push_back(Instruction{ Code::LOAD_NONE });
+        // 2.
         for (const auto& e : callStmt->params) {
             compileExpression(e);
         }
-        auto size = flag ? callStmt->params.size() + 1 : callStmt->params.size();
-        cache.push_back(Instruction{ Code::LOAD_INT, size });
+        cache.push_back(Instruction{ Code::LOAD_INT, callStmt->params.size() });
         cache.push_back(Instruction{ Code::LOAD_LIST });
-        compileExpression(callStmt->caller);
+        // 3.
+        compileExpression(callStmt->caller); // 之前没讲全，也要把函数对象加载进栈
+        // 4.
         cache.push_back(Instruction{ Code::CALL });
         break;
     }
@@ -473,6 +483,26 @@ void Compiler::compileStatement(APointer node)
         auto expression = returnStmt->expression;
         compileExpression(expression);
         cache.push_back(Instruction{Code::RETURN});
+        break;
+    }
+    case NodeType::Call: {
+        auto callStmt = dynamicPointerCast<Parse::Call>(node);
+        auto& left = callStmt->caller;
+        // 1.
+        if (left->getType() == NodeType::Attribute)
+            compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller);
+        else
+            cache.push_back(Instruction{ Code::LOAD_NONE });
+        // 2.
+        for (const auto& e : callStmt->params) {
+            compileExpression(e);
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, callStmt->params.size() });
+        cache.push_back(Instruction{ Code::LOAD_LIST });
+        // 3.
+        compileExpression(callStmt->caller); // 之前没讲全，也要把函数对象加载进栈
+        // 4.
+        cache.push_back(Instruction{ Code::CALL });
         break;
     }
     case NodeType::Class: {

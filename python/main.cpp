@@ -34,17 +34,27 @@ inline uint qHash(const pointer& p, uint seed = 0)
 int main(int argc, char *argv[])
 {
     std::string code1 = R"(
-class Person :
-    # 所有属性赋值都会走这里
-    def __setattr__(self, attr_name, value) :
-        print("正在设置属性：" + attr_name + " = " + value)
-        # 真正把值存进去
-        self.__dict__[attr_name] = value
+# 顶层类，有方法
+class A:
+    def hello(self):
+        print("Hello from A")
 
-# 测试
-p = Person()
-p.name = "Tom"   # 触发 __setattr__
-p.age = 18       # 触发 __setattr__
+# B 继承 A，空实现（pass）
+class B(A):
+    pass
+
+# C 继承 A，重写方法
+class C(A):
+    def hello(self):
+        print("Hello from C")
+
+# D 多继承 B、C，空实现（pass）
+class D(B, C):
+    pass
+
+# 测试调用
+d = D()
+d.hello()
 )";
 
     try {

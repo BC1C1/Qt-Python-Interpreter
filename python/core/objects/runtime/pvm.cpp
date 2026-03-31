@@ -18,6 +18,8 @@ PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), 
     auto defaultEnvir = makeShared<Environment>(nullptr, this);
     callFrameStack.push(makeCallFrame(0, defaultEnvir, Instruction::toByteArray(codes)));
     currCodes = codes;
+    initRootObject();
+    PClass::object = object;
 }
 
 void PVM::start()
@@ -197,6 +199,15 @@ void PVM::halt_execute()
 {
     qDebug() << "收到HALT停机指令";
     stop();
+}
+
+inline void PVM::initRootObject() {
+    object = new PClass(
+        "!object",                // 不可能被使用的类名
+        QHash<QString, pointer>(),
+        QHash<QString, pointer>(),
+        QVector<pointer>()       
+    );
 }
 
 void PVM::load_list_execute()
@@ -459,37 +470,25 @@ void PVM::create_function_execute(QVariant operand)
 
 void PVM::call_execute(bool& isGo)
 {
-    auto caller = popValue(); // 这个caller是函数
-    qDebug() << "caller.type is: " << TypeToString(caller->getType().type);
-    qDebug() << "caller.value is(toString): " << caller->toString();
-    auto params = popValue();
+    auto caller = popValue();
+    pointer trueParam = popValue();
+    auto funcCaller = popValue();
     auto newEnvir = createNewEnvironment(currEnvir());
-    switch (caller->getType().type)
+    if (funcCaller->getType().type == Type::Instance)
     {
-    case Type::FunctionDefine: {
-        auto function = dynamicPointerCast<Py::PFunction>(caller);
-        caller->__call__(params, newEnvir);
-        auto newCode = function->getCodeObj();
-        callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
-        currCodes = newCode;
-        isGo = false;
-        PC = 0;
-        break;
+        auto listobj = dynamicPointerCast<PList>(trueParam);
+        QVector<pointer> p = { funcCaller };
+        p.append(listobj->getTrueValue());
+        trueParam = makeShared<PList>(p);
     }
-    case Type::Class: {
-        auto classObj = dynamicPointerCast<Py::PClass>(caller);
-        if (!classObj) {
-            throwErrMsg(u8"无效的caller");
-        }
-        for (const auto& p : classObj->getFunctions()) {
-            qDebug() << p->toString();
-        }
-        auto obj = classObj->__call__(params, newEnvir);
-        pushValue(obj); // 先压入栈，后面的是闭合操作，会把操作数栈顶重新变回obj，就能return回去
-        auto param = dynamicPointerCast<PList>(params);
-        auto initFunc = classObj->getFunctions()["__init__"];
+    else if (caller->getType().type == Type::Class) {
+        auto classObj = dynamicPointerCast<PClass>(caller);
+        auto obj = caller->__call__(trueParam, currEnvir());
         QVector<pointer> p = { obj };
-        p.append(param->getTrueValue());
+        pushValue(obj);
+        p.append(dynamicPointerCast<PList>(trueParam)->getTrueValue());
+        trueParam = makeShared<PList>(p);
+        auto initFunc = classObj->getFunctions()["__init__"];
         initFunc->__call__(makeShared<PList>(p), newEnvir);
         auto initFObj = dynamicPointerCast<PFunction>(initFunc);
         auto newCode = initFObj->getCodeObj();
@@ -497,11 +496,59 @@ void PVM::call_execute(bool& isGo)
         currCodes = newCode;
         isGo = false;
         PC = 0;
-        break;
+        return;
     }
-    default:
-        break;
-    }
+    // 其它情况不需要加
+    auto function = dynamicPointerCast<PFunction>(caller);
+    auto newCode = function->getCodeObj();
+    callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+    currCodes = newCode;
+    isGo = false;
+    PC = 0;
+    return;
+    //auto caller = popValue(); 
+    //qDebug() << "caller.type is: " << TypeToString(caller->getType().type);
+    //qDebug() << "caller.value is(toString): " << caller->toString();
+    //auto params = popValue();
+    //auto newEnvir = createNewEnvironment(currEnvir());
+    //switch (caller->getType().type)
+    //{
+    //case Type::FunctionDefine: {
+    //    auto function = dynamicPointerCast<Py::PFunction>(caller);
+    //    caller->__call__(params, newEnvir);
+    //    auto newCode = function->getCodeObj();
+    //    callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+    //    currCodes = newCode;
+    //    isGo = false;
+    //    PC = 0;
+    //    break;
+    //}
+    //case Type::Class: {
+    //    auto classObj = dynamicPointerCast<Py::PClass>(caller);
+    //    if (!classObj) {
+    //        throwErrMsg(u8"无效的caller");
+    //    }
+    //    for (const auto& p : classObj->getFunctions()) {
+    //        qDebug() << p->toString();
+    //    }
+    //    auto obj = classObj->__call__(params, newEnvir);
+    //    pushValue(obj); // 先压入栈，后面的是闭合操作，会把操作数栈顶重新变回obj，就能return回去
+    //    auto param = dynamicPointerCast<PList>(params);
+    //    auto initFunc = classObj->getFunctions()["__init__"];
+    //    QVector<pointer> p = { obj };
+    //    p.append(param->getTrueValue());
+    //    initFunc->__call__(makeShared<PList>(p), newEnvir);
+    //    auto initFObj = dynamicPointerCast<PFunction>(initFunc);
+    //    auto newCode = initFObj->getCodeObj();
+    //    callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+    //    currCodes = newCode;
+    //    isGo = false;
+    //    PC = 0;
+    //    break;
+    //}
+    //default:
+    //    break;
+    //}
 }
 
 void PVM::return_execute(bool& isGo)
@@ -519,6 +566,15 @@ void PVM::return_execute(bool& isGo)
 void PVM::create_class_execute(QVariant operand)
 {
     auto className = operand.toString();
+    auto parentNumber = popValue()->getValue().toInt();
+    QVector<pointer> parents;
+    for (int i = 0; i < parentNumber; i++) {
+        parents.append(popValue());
+    }
+    std::reverse(parents.begin(), parents.end());
+    if (parents.size() == 0) {
+        parents.append(QSharedPointer<PClass>(object));
+    }
     auto staticNumber = popValue()->getValue().toInt();
     QHash<QString, pointer> staticMembers;
     for (int i = 0; i < staticNumber; i++) {
@@ -533,7 +589,7 @@ void PVM::create_class_execute(QVariant operand)
         auto functionobj = popValue();
         functions[functionName] = functionobj;
     }
-    auto classObj = makeShared<Py::PClass>(className, functions, staticMembers);
+    auto classObj = makeShared<Py::PClass>(className, functions, staticMembers, parents);
     currEnvir()->assign(operand.toString(), classObj);
 }
 
@@ -871,6 +927,11 @@ void PVM::run()
         qDebug() << e.what();
     }
 
+}
+
+PVM::~PVM()
+{
+    delete object;
 }
 
 QString CodeToQString(Code code)

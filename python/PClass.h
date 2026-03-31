@@ -9,7 +9,11 @@ namespace Py {
 	class PClass : public PObject
 	{
 	public:
-		PClass(const QString& className, MemberMap functions, MemberMap staticMembers, PClass* parent = nullptr);
+		PClass(
+			const QString& className, 
+			MemberMap functions, 
+			MemberMap staticMembers, 
+			const QVector<pointer>& parents = QVector<pointer>());
 		virtual QString toString() const override;
 		QVariant getValue() const override;
 
@@ -19,12 +23,17 @@ namespace Py {
 		virtual pointer __call__(const pointer& params, QSharedPointer<Environment> envir) override;
 		MemberMap& getFunctions();
 		MemberMap& getStaticMembers();
-
+		pointer onlygeattributehere(const QString& attrName);
+	private:
+		bool neverInTail(PClass* c, QVector<PClass*>& l);
+		QVector<PClass*> mro(PClass* cls);
 	private:
 		QString className;
 		QHash<QString, pointer> functions;
 		QHash<QString, pointer> staticMembers;
-		PClass* parent;
+		QVector<pointer> parents;
+	public:
+		static PClass* object;
 	};
 }
 
