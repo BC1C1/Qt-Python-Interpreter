@@ -17,7 +17,7 @@ using runtime_error = std::runtime_error;
 
 enum class Type {
     Int, Float, Str, Bool, None, Undefined, Iterator, List, FunctionDefine,
-    ReturnValue, Class, Instance
+    ReturnValue, Class, Instance, Dict
 };
 QString TypeToString(Type type);
 struct PyType {
@@ -119,7 +119,8 @@ static const std::map<Type, PyType> typeMap = {
     {Type::FunctionDefine, PyType{Type::FunctionDefine}},
     {Type::ReturnValue, PyType{Type::ReturnValue}},
     {Type::Class, PyType{Type::Class}},
-    {Type::Instance, PyType{Type::Instance}}
+    {Type::Instance, PyType{Type::Instance}},
+    {Type::Dict, PyType{Type::Dict}}
 };
 class PInt;
 class PFloat;
@@ -132,6 +133,7 @@ class PFunction;
 class PReturnValue;
 class PClass;
 class PInstance;
+class PDict;
 }
 
 

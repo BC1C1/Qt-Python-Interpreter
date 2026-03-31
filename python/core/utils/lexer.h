@@ -26,7 +26,7 @@ namespace Lex
         // 赋值
         ASSIGN,
         // 括号
-        LPAREN, RPAREN, LBRACKET, RBRACKET,
+        LPAREN, RPAREN, LBRACKET, RBRACKET, LBRACE, RBRACE,
         // 冒号
         COLON,
         // 缩进
@@ -248,6 +248,7 @@ namespace Lex
 
     private:
         std::vector<int> indentStack = { 0 };
+        int bracketNesting = 0;
     signals:
         void finished(QVector<Token>);
     };

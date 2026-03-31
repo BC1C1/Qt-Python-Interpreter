@@ -2,10 +2,12 @@
 
 #include "core/objects/runtime/pnone.h"
 
+
 namespace Py {
 
 PIterator::PIterator(PObject::pointer object)
-    : PObject(typeMap.at(Type::Iterator)), object(object), currentIndex(0), listCache(nullptr)
+    : PObject(typeMap.at(Type::Iterator)), object(object), currentIndex(0), listCache(nullptr),
+    dictCache(nullptr)
 {
 }
 
@@ -21,7 +23,20 @@ PObject::pointer PIterator::__next__()
         }
         if (currentIndex >= listCache->getTrueValue().size())
             return makeShared<PNone>();
-        auto obj = listCache->getTrueValue()[currentIndex];
+        auto& obj = listCache->getTrueValue()[currentIndex];
+        currentIndex++;
+        return obj;
+        break;
+    }
+    case Type::Dict: {
+        QSharedPointer<PDict> dictObj = nullptr;
+        if (!dictCache) {
+            dictObj = dynamicPointerCast<PDict>(object);
+            dictCache = dictObj.get();
+        }
+        if (currentIndex >= dictCache->size())
+            return makeShared<PNone>();
+        auto obj = dictCache->getKeyAt(currentIndex);
         currentIndex++;
         return obj;
         break;

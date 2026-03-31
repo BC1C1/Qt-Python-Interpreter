@@ -2,17 +2,28 @@
 
 #include "PClass.h"
 
+#include "core/utils/functions.h"
+#include "core/objects/runtime/pbool.h"
+#include "PDict.h"
+
 namespace Py {
 	PInstance::PInstance(EPointer envir, PClass* classObj) : PObject(typeMap.at(Type::Instance)),
 		classObj(classObj)
 	{
 		auto& classStaticMembers = classObj->getStaticMembers();
 		privateMembers = MemberMap(classStaticMembers.begin(), classStaticMembers.end());
+		auto dict_obj = makeShared<PDict>();
+		privateMembers.insert("__dict__", dict_obj);
 	}
 
 	QString PInstance::toString() const
 	{
 		return QString("a instance of %1").arg(classObj->toString());
+	}
+
+	PClass* PInstance::getClassObj() const
+	{
+		return classObj;
 	}
 
 	void PInstance::__setattribute__(const QString& attrName, const pointer& obj)
@@ -31,13 +42,36 @@ namespace Py {
 		if (iter != functions.end()) {
 			return iter.value();
 		}
-		//auto& members = classObj->getStaticMembers();
-		//iter = members.find(attrName);
-		//if (iter != members.end()) {
-		//	return iter.value();
-		//} // 不需要，因为复制过一遍了
-		Py::PObject::__getattribute__(attrName); // 调用默认报错的方法
-		return nullptr; // 其实到不了这一句
+
+		return nullptr; 
+	}
+	pointer PInstance::__eq__(const pointer& other) const
+	{
+		auto type = other->getType().type;
+		switch (type)
+		{
+		case Type::None: {
+			return makeShared<PBool>(false);
+			break;
+		}
+		default:
+			return makeShared<PBool>(false);
+			break;
+		}
+	}
+	pointer PInstance::__ne__(const pointer& other) const
+	{
+		auto type = other->getType().type;
+		switch (type)
+		{
+		case Type::None: {
+			return makeShared<PBool>(true);
+			break;
+		}
+		default:
+			return makeShared<PBool>(true);
+			break;
+		}
 	}
 }
 

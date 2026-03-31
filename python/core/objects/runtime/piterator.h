@@ -4,6 +4,7 @@
 #include "core/objects/runtime/pobject.h"
 #include "core/utils/functions.h"
 #include "core/objects/runtime/plist.h"
+#include "PDict.h"
 
 namespace Py {
 class PIterator : public PObject
@@ -16,6 +17,7 @@ private:
     pointer object;
     int currentIndex;
     PList* listCache;
+    PDict* dictCache;
 };
 }
 

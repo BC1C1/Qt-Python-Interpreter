@@ -49,6 +49,7 @@ private:
     pointer parseUnary();
     pointer parsePrimary();
     pointer parseList();
+    pointer parseDict();
 private:
     void throwErrorMsg(string text);
 private:

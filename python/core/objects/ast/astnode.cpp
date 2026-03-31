@@ -358,6 +358,7 @@ QJsonObject Function::toJson() const
     ret["params"] = params->toJson();
     ret["functionNamee"] = QString::fromStdString(functionName);
     ret["block"] = block->toJson();
+    ret["line"] = getLine();
     return ret;
 }
 
@@ -371,6 +372,7 @@ QJsonObject Return::toJson() const
     QJsonObject ret;
     ret["type"] = "Return";
     ret["toReturn"] = expression->toJson();
+    ret["line"] = getLine();
     return ret;
 }
 
@@ -382,6 +384,7 @@ Class::Class(QVector<pointer>& functions, QString& className, QVector<pointer>& 
 QJsonObject Class::toJson() const
 {
     QJsonObject ret;
+    ret["type"] = "Class";
     ret["className"] = className;
     QJsonArray arr1;
     for (const auto& f : functions) {
@@ -393,6 +396,28 @@ QJsonObject Class::toJson() const
         arr2.append(m->toJson());
     }
     ret["staticMembers"] = arr2;
+    ret["line"] = getLine();
+    return ret;
+}
+
+Dict::Dict(QVector<QPair<pointer, pointer>>&& element, int line)
+    : ANode(NodeType::Dict, line), elements(element)
+{
+}
+
+QJsonObject Dict::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "Dict";
+    QJsonArray arr;
+    for (const auto& p : elements) {
+        QJsonObject pair;
+        pair["key"] = p.first->toJson();
+        pair["value"] = p.second->toJson();
+        arr.append(pair);
+    }
+    ret["elements"] = arr;
+    ret["line"] = getLine();
     return ret;
 }
 

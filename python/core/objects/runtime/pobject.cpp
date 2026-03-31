@@ -16,6 +16,7 @@ QString TypeToString(Type type)
     case Type::ReturnValue: return "returnValue";
     case Type::Class: return "class";
     case Type::Instance: return "instance";
+    case Type::Dict:  return "dict";
     default: return "undefine";
     }
 }

@@ -208,6 +208,16 @@ void Compiler::compileExpression(APointer node)
         cache.push_back(Instruction{Code::LOAD_LIST});
         break;
     }
+    case NodeType::Dict: {
+        auto dict = dynamicPointerCast<Parse::Dict>(node);
+        for (const auto& pair : dict->elements) {
+            compileExpression(pair.first);
+            compileExpression(pair.second); // 这样第一个pop出来就是键
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, dict->elements.size() });
+        cache.push_back(Instruction{ Code::LOAD_DICT });
+        break;
+    }
     case NodeType::Binary: {
         auto binary = dynamicPointerCast<Parse::Binary>(node);
         compileExpression(binary->left);

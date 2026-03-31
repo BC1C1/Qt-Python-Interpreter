@@ -6,9 +6,9 @@
 #include "PInstance.h"
 
 namespace Py {
-	PClass::PClass(const QString& className, MemberMap functions, MemberMap staticMembers)
+	PClass::PClass(const QString& className, MemberMap functions, MemberMap staticMembers, PClass* parent)
 		: PObject(typeMap.at(Type::Class)),
-		className(className), functions(functions), staticMembers(staticMembers)
+		className(className), functions(functions), staticMembers(staticMembers), parent(parent)
 	{
 		auto iter = this->functions.find("__init__");
 		if (iter == this->functions.end()) {

@@ -21,6 +21,7 @@ enum class Code: char {
     LOAD_FLOAT,         // need 数字           栈：[] → [值]
     LOAD_STRING,        // need 字符串         栈：[] → [值]
     LOAD_LIST,          //                    栈：[] → [值]
+    LOAD_DICT,
     LOAD_NONE,          //                    栈：[] → [值]
 
     // 加载变量
@@ -149,6 +150,66 @@ private:
 //    EPointer defaultEnvir;
     BlockFrameStack blockFrameStack;
     CallFrameStack callFrameStack;
+private:
+    // -------------------------- LOAD 系列 --------------------------
+    void load_list_execute();
+    void load_dict_execute();
+    void load_name_execute(QVariant operand);
+    void load_int_execute(QVariant operand);
+    void load_float_execute(QVariant operand);
+    void load_string_execute(QVariant operand);
+    void load_attr_execute(QVariant operand, bool& isGo);
+    void load_index_execute();
+    void load_none_execute();
+    void load_true_execute();
+    void load_false_execute();
+
+    // -------------------------- STORE 系列 --------------------------
+    void store_attr_execute(QVariant operand, bool& isGo);
+    void store_index_execute();
+    void store_var_execute(QVariant operand);
+
+    // -------------------------- 循环相关 --------------------------
+    void loop_start_for_execute();
+    void loop_start_while_execute();
+    void continue_execute(bool& isGo);
+    void break_execute(bool& isGo);
+    void loop_for_end_execute();
+    void loop_while_end_execute();
+
+    // -------------------------- 迭代器相关 --------------------------
+    void create_iter_execute();
+    void iter_next_execute(QVariant operand);
+
+    // -------------------------- 跳转相关 --------------------------
+    void jump_if_false_execute(const QVariant& operand, bool& isGo);
+    void jump_execute(const QVariant& operand, bool& isGo);
+
+    // -------------------------- 函数/类相关 --------------------------
+    void create_function_execute(QVariant operand);
+    void call_execute(bool& isGo);
+    void return_execute(bool& isGo);
+    void create_class_execute(QVariant operand);
+
+    // -------------------------- 算术运算 --------------------------
+    void add_execute(bool& isGo);
+    void sub_execute(bool& isGo);
+    void mul_execute(bool& isGo);
+    void div_execute(bool& isGo);
+    void mod_execute(bool& isGo);
+    void pow_execute(bool& isGo);
+
+    // -------------------------- 比较运算 --------------------------
+    void eq_execute(bool& isGo);
+    void neq_execute(bool& isGo);
+    void gt_execute(bool& isGo);
+    void ge_execute(bool& isGo);
+    void lt_execute(bool& isGo);
+    void le_execute(bool& isGo);
+
+    // -------------------------- 基础操作 --------------------------
+    void halt_execute();
+    void print_execute();
 signals:
 
 };

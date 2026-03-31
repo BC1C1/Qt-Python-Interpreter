@@ -167,6 +167,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="PClass.cpp" />
+    <ClCompile Include="PDict.cpp" />
     <ClCompile Include="PInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -174,12 +175,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core\objects\ast\astnode.h" />
+    <ClInclude Include="PDict.h" />
     <ClInclude Include="PInstance.h" />
     <QtMoc Include="core\objects\runtime\blockandframe.h" />
     <QtMoc Include="core\objects\runtime\pbool.h" />
     <QtMoc Include="core\objects\runtime\pfloat.h" />
     <ClInclude Include="core\objects\runtime\pfunction.h" />
-    <QtMoc Include="core\objects\runtime\piterator.h" />
+    <ClInclude Include="core\objects\runtime\piterator.h" />
     <ClInclude Include="core\objects\runtime\plist.h" />
     <QtMoc Include="core\objects\runtime\pnone.h" />
     <QtMoc Include="core\objects\runtime\pstr.h" />

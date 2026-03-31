@@ -3,9 +3,9 @@
 #include <QApplication>
 #include <QJsonDocument>
 #include <qdebug.h>
+#include <qhash.h>
 #include "core/utils/lexer.h"
 #include "core/utils/parser.h"
-#include <qdebug.h>
 #include "core/objects/runtime/pvm.h"
 #include "core/utils/compiler.h"
 
@@ -22,18 +22,29 @@ using vm::Code;
 using vm::PVM;
 using vm::Instruction;
 using Compile::Compiler;
+using PObject = Py::PObject;
+using pointer = QSharedPointer<PObject>;
+
+inline uint qHash(const pointer& p, uint seed = 0)
+{
+    return qHash(p.data(), seed);
+}
 
 
 int main(int argc, char *argv[])
 {
     std::string code1 = R"(
-class test:
-    def __init__(self, a):
-        self.a = a
-    def add(self, b):
-        return self.a + b
-t = test(1)
-print(t.add(2))
+class Person :
+    # 所有属性赋值都会走这里
+    def __setattr__(self, attr_name, value) :
+        print("正在设置属性：" + attr_name + " = " + value)
+        # 真正把值存进去
+        self.__dict__[attr_name] = value
+
+# 测试
+p = Person()
+p.name = "Tom"   # 触发 __setattr__
+p.age = 18       # 触发 __setattr__
 )";
 
     try {

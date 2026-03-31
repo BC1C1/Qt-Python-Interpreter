@@ -433,12 +433,22 @@ pointer Parser::parsePrimary()
         ret = inner;
         break;
     }
+    case Lex::TokenType::LBRACE: {
+        auto inner = parseDict();
+        ret = inner;
+        break;
+    }
     case Lex::TokenType::COMMA: {
         break;
     }
     case Lex::TokenType::RPAREN: {
         // 直接提交错误
         throwErrorMsg("缺失的左括号");
+        current += 1;
+        break;
+    }
+    case Lex::TokenType::RBRACE: {
+        throwErrorMsg("缺失的左花括号");
         current += 1;
         break;
     }
@@ -517,6 +527,27 @@ pointer Parser::parseList()
 
     consume(TokenType::RBRACKET, u8"缺失的右中括号");
     return makeShared<List>(std::move(elements), getInstantLine());
+}
+
+pointer Parser::parseDict()
+{
+    consume(TokenType::LBRACE, u8"缺失的左花括号");
+    int line = getInstantLine();
+    QVector<QPair<pointer, pointer>> elements;
+
+    do {
+        if (check(TokenType::RBRACE)) break;
+        auto key = parseExpression();
+        consume(TokenType::COLON, u8"键值对缺少冒号");
+        auto value = parseExpression();
+        if (!check(TokenType::RBRACE) && !match(TokenType::COMMA)) {
+            throwErrorMsg(u8"字典元素之间缺少逗号");
+            break;
+        }
+        elements.append(qMakePair<pointer, pointer>(key, value));
+    } while (true);
+    consume(TokenType::RBRACE, u8"缺失的右花括号");
+    return makeShared<Dict>(std::move(elements), line);
 }
 
 void Parser::throwErrorMsg(std::string text)

@@ -81,12 +81,12 @@ std::vector<Lex::Token> Lex::Lexer::scanPartToken(const std::string& line, int l
         current++;
     }
     int indentCount = cnt / 4;
-    if (indentCount > indentStack.back()) {
+    if (indentCount > indentStack.back() && bracketNesting == 0) {
         tokens.emplace_back(TokenType::INDENT, "", lineNum);
         indentStack.push_back(indentCount);
         current_indent = indentCount;
     }
-    else while (indentCount < indentStack.back()) {
+    else while (indentCount < indentStack.back() && bracketNesting == 0) {
         tokens.emplace_back(TokenType::DEDENT, "", lineNum);
         indentStack.pop_back();
         current_indent = indentStack.back();
@@ -238,18 +238,32 @@ std::vector<Lex::Token> Lex::Lexer::scanPartToken(const std::string& line, int l
         }
         else if (c == '(') {  // (
             tokens.emplace_back(TokenType::LPAREN, "(", lineNum);
+            bracketNesting++;
             current++;
         }
         else if (c == ')') {  // )
             tokens.emplace_back(TokenType::RPAREN, ")", lineNum);
+            bracketNesting--;
             current++;
         }
         else if (c == '[') {  // {
             tokens.emplace_back(TokenType::LBRACKET, "[", lineNum);
+            bracketNesting++;
             current++;
             }
         else if (c == ']') {  // }
             tokens.emplace_back(TokenType::RBRACKET, "]", lineNum);
+            bracketNesting--;
+            current++;
+        }
+        else if (c == '{') {
+            tokens.emplace_back(TokenType::LBRACE, "{", lineNum);
+            bracketNesting++;
+            current++;
+        }
+        else if (c == '}') {
+            tokens.emplace_back(TokenType::RBRACE, "}", lineNum);
+            bracketNesting--;
             current++;
         }
         else if (c == '#') { // 注释

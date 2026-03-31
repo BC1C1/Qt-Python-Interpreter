@@ -9,7 +9,7 @@ namespace Py {
 	class PClass : public PObject
 	{
 	public:
-		PClass(const QString& className, MemberMap functions, MemberMap staticMembers);
+		PClass(const QString& className, MemberMap functions, MemberMap staticMembers, PClass* parent = nullptr);
 		virtual QString toString() const override;
 		QVariant getValue() const override;
 
@@ -24,6 +24,7 @@ namespace Py {
 		QString className;
 		QHash<QString, pointer> functions;
 		QHash<QString, pointer> staticMembers;
+		PClass* parent;
 	};
 }
 
