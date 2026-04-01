@@ -4,12 +4,14 @@
 #include "core/objects/runtime/pint.h"
 #include "core/objects/runtime/plist.h"
 #include "core/objects/runtime/pnone.h"
+#include "PDict.h"
+#include <qset.h>
 
 namespace Py {
 
-PFunction::PFunction(PObject::pointer params, const QByteArray &code, PObject::pointer name, bool isClassFunction)
+PFunction::PFunction(pointer listObj, pointer dictObj, const QByteArray &code, PObject::pointer name, bool isClassFunction)
 : PObject(typeMap.at(Type::FunctionDefine)),
-  name(name), params(params), code(code), isClassFunction(isClassFunction)
+  name(name), listParams(listObj), dictParams(dictObj), code(code), isClassFunction(isClassFunction)
 {
 
 }
@@ -29,9 +31,14 @@ PStr* PFunction::getNameObj() const
     return (PStr*)name.get();
 }
 
-PList* PFunction::getParamsObj() const
+PList* PFunction::getListParamsObj() const
 {
-    return (PList*)params.get();
+    return (PList*)listParams.get();
+}
+
+PDict* PFunction::getDictParamsObj() const
+{
+    return (PDict*)dictParams.get();
 }
 
 bool PFunction::getIsClassFunction() const
@@ -39,29 +46,60 @@ bool PFunction::getIsClassFunction() const
     return this->isClassFunction;
 }
 
-Py::PObject::pointer PFunction::__call__(const pointer& params, QSharedPointer<Environment> newEnvir)
+Py::PObject::pointer PFunction::__call__(const pointer& listParams, 
+    const pointer& dictParams,
+    QSharedPointer<Environment> newEnvir)
 {
-    auto param = dynamicPointerCast<Py::PList>(params);
-    auto sizeFalse = getParamsObj()->size();
-    auto sizeTrue = param->size();
-    if (sizeTrue != sizeFalse) {
-        QString errMsg = QString(u8"参数数量不匹配: 形参数量：%1，实参数量：%2")
-            .arg(sizeFalse).arg(sizeTrue);
+    auto listObj = (PList*)(listParams.get());
+    auto dictObj = (PDict*)(dictParams.get());
+
+    QSet<pointer> assigned;
+
+    // pos assign
+    auto& fl = ((PList*)(this->listParams.get()))->getTrueValue();
+    auto& tl = listObj->getTrueValue();
+    if (tl.size() > fl.size()) {
+        auto dsize = tl.size() - fl.size();
+        QString errMsg = QString(u8"位置参数过多: 形参数量：%1，实参数量：%2")
+            .arg(fl.size()).arg(tl.size());
         throw std::runtime_error(errMsg.toStdString());
     }
-    // 参数处理
-    auto pIter = params->__iter__();
-    auto fIter = getParamsObj()->__iter__();
-    auto NoneObj = makeShared<PNone>(); // 未来搞成全局对象
-    for (int i = 0; i < param->size(); i++) {
-        auto value1 = fIter->__next__();
-    //if (i == 0 && getIsClassFunction()) {
-    //    newEnvir->assign(value1->toString(), sharedFromThis()); // 绑定self
-    //    continue;
-    //}
-    newEnvir->assign(value1->toString(), pIter->__next__());
+    // 逐个赋值
+    for (int i = 0; i < tl.size(); i++) {
+        assigned.insert(fl[i]);
+        newEnvir->assign(fl[i]->toString(), tl[i]);
     }
-    return nullptr;
+
+    // key assign
+    auto& fd = ((PDict*)(this->dictParams.get()))->getTrueValue();
+    auto& td = dictObj->getTrueValue();
+    // 对传入的关键字赋值
+    for (int i = 0; i < td.size(); i++) {
+        auto tpair = td.begin() + i;
+        if (assigned.contains(tpair.key())) {
+            QString errMsg = QString(u8"关键字参数: %1不可重复赋值").arg(tpair.key()->toString());
+            throw std::runtime_error(errMsg.toStdString());
+        }
+        if (!fd.contains(tpair.key()) && !fl.contains(tpair.key())) {
+            throw std::runtime_error(QString(u8"参数'%1'不是函数的形参")
+                .arg(tpair.key()->toString()).toStdString());
+        }
+        newEnvir->assign(tpair.key()->toString(), tpair.value());
+    }
+    // 对默认参数赋值
+    for (int i = 0; i < fd.size(); i++) {
+        auto fpair = fd.begin() + i;
+        if (assigned.contains(fpair.key()))
+            continue;
+        newEnvir->assign(fpair.key()->toString(), fpair.value());
+    }
+    // 检查为赋值的参数
+    for (const auto& o : fl) {
+        if (!assigned.contains(o)) {
+            throw std::runtime_error(QString(u8"缺少必选参数：%1").arg(o->toString()).toStdString());
+        }
+    }
+    return makeShared<PNone>();
 }
 
 QVector<vm::Instruction> PFunction::getCodeObj() const

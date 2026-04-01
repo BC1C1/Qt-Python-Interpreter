@@ -4,6 +4,7 @@
 #include "core/objects/runtime/plist.h"
 #include "core/objects/runtime/pstr.h"
 #include "PInstance.h"
+#include "PDict.h"
 
 namespace Py {
 	PClass* PClass::object = nullptr;
@@ -16,18 +17,19 @@ namespace Py {
 		: PObject(typeMap.at(Type::Class)),
 		className(className), functions(functions), staticMembers(staticMembers), parents(parents)
 	{
-		auto iter = this->functions.find("__init__");
-		if (iter == this->functions.end()) {
+		auto initFunc = __getattribute__("__init__");
+		if (initFunc == nullptr) {
 			auto self = makeShared<PStr>("self");
-			QVector<pointer> params;
-			params.push_back(self);
-			auto param = makeShared<PList>(params);
+			QVector<pointer> listParams;
+			listParams.push_back(self);
+			auto param = makeShared<PList>(listParams);
 			QVector<vm::Instruction> temp;
 			temp.push_back(vm::Code::RETURN);
 			auto name = makeShared<PStr>("__init__");
-			auto functionObj = makeShared<PFunction>(param, vm::Instruction::toByteArray(temp), name);
+			auto functionObj = makeShared<PFunction>(param, makeShared<PDict>(), vm::Instruction::toByteArray(temp), name);
 			this->functions["__init__"] = functionObj;
 		}
+
 	}
 	QString PClass::toString() const
 	{
@@ -37,7 +39,10 @@ namespace Py {
 	{
 		return QVariant(u8"no value in class");
 	}
-	pointer PClass::__instance__(const pointer& params, QSharedPointer<Environment> envir)
+	pointer PClass::__instance__(
+		const pointer& listParams,
+		const pointer& dictParams,
+		QSharedPointer<Environment> envir)
 	{
 		auto obj = makeShared<PInstance>(envir, this);
 		return obj;
@@ -59,15 +64,11 @@ namespace Py {
 	}
 	pointer PClass::__getattribute__(const QString& attrName)
 	{
-		//auto iter = functions.find(attrName);
-		//if (iter != functions.end()) {
-		//	return iter.value();
-		//}
-		//iter = staticMembers.find(attrName);
-		//if (iter != staticMembers.end()) {
-		//	return iter.value();
-		//}
-		auto mrovec = mro(this);
+		if (!mroList) {
+			mrolist = mro(this);
+			mroList = &mrolist;
+		}
+		auto& mrovec = *mroList;
 		for (const auto& c : mrovec) {
 			auto ret = c->onlygeattributehere(attrName);
 			if (ret)
@@ -75,9 +76,16 @@ namespace Py {
 		}
 		return nullptr;
 	}
-	pointer PClass::__call__(const pointer& params, QSharedPointer<Environment> envir)
+	pointer PClass::__call__(
+		const pointer& listParams,
+		const pointer& dictParams, 
+		QSharedPointer<Environment> envir)
 	{
-		return __instance__(params, envir);
+		return __instance__(listParams, dictParams, envir);
+	}
+	QVector<PClass*> PClass::__mro__()
+	{
+		return *mroList;
 	}
 	MemberMap& PClass::getFunctions()
 	{
@@ -114,34 +122,22 @@ namespace Py {
 	}
 	QVector<PClass*> PClass::mro(PClass* cls)
 	{
-		// ----------------------------------------
-		// 终止条件：根类（object）
-		// ----------------------------------------
 		if (cls->parents.isEmpty()) {
 			return { cls };
 		}
-
-		// ----------------------------------------
-		// 第一步：收集所有要合并的列表
-		// ----------------------------------------
 		QVector<QVector<PClass*>> toMerge;
 
-		// 1. 加入所有父类的 MRO
 		for (auto& pObj : cls->parents) {
-			auto p = dynamicPointerCast<PClass>(pObj);
-			toMerge.append(mro(p.get()));
+			auto p = (PClass*)(pObj.get());
+			toMerge.append(mro(p));
 		}
 
-		// 2. 加入直接父类列表（C3 必需）
 		QVector<PClass*> directParents;
 		for (auto& pObj : cls->parents) {
 			directParents.append((PClass*)pObj.get());
 		}
 		toMerge.append(directParents);
 
-		// ----------------------------------------
-		// 第二步：C3 合并核心
-		// ----------------------------------------
 		QVector<PClass*> result;
 		result.append(cls);
 
@@ -157,10 +153,6 @@ namespace Py {
 
 			if (toMerge.isEmpty())
 				break;
-
-			// ------------------------------------
-			// 找一个合法的 head
-			// ------------------------------------
 			PClass* head = nullptr;
 			for (auto& list : toMerge) {
 				PClass* candidate = list.first();
@@ -180,14 +172,10 @@ namespace Py {
 			}
 
 			if (!head) {
-				// 没有合法候选 → 继承冲突
 				qDebug() << "C3 MRO 错误：无法合并继承";
 				return result;
 			}
 
-			// ------------------------------------
-			// 把 head 加入结果，并从所有列表删除
-			// ------------------------------------
 			result.append(head);
 
 			for (auto& list : toMerge) {

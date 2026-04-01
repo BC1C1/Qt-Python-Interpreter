@@ -40,6 +40,12 @@ namespace Py {
 	{
 		return makeShared<PStr>(toString());
 	}
+	pointer PDict::operator[](const pointer& key)
+	{
+		auto iter = hashTable.find(key);
+		if (iter == hashTable.end()) return nullptr;
+		return iter.value();
+	}
 	pointer PDict::__getitem__(const pointer& index)
 	{
 		auto iter = hashTable.find(index);

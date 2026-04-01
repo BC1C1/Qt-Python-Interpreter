@@ -206,9 +206,9 @@ public:
 
 class Function: public ANode {
 public:
-    Function(int line, const std::string& functionName, pointer params, pointer block = nullptr);
+    Function(int line, const std::string& functionName, pointer listParams, pointer block = nullptr);
     std::string functionName;
-    pointer params;
+    pointer listParams;
     pointer block;
     virtual QJsonObject toJson() const override;
 };

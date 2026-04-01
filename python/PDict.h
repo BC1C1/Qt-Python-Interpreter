@@ -14,9 +14,12 @@ namespace Py {
 		QList<pointer> getKeyList();
 		QList<pointer> getValueList();
 		pointer getKeyAt(int index);
+		TableType& getTrueValue() { return hashTable; }
 
 		virtual QString toString() const override;
 		virtual pointer asString() const override;
+
+		pointer operator[](const pointer& key);
 
 		virtual pointer __getitem__(const pointer& index) override;
 		virtual void __setitem__(const pointer& index, pointer obj) override;

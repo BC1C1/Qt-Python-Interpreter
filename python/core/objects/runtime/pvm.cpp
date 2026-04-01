@@ -12,6 +12,7 @@
 #include "core/objects/runtime/pfunction.h"
 #include "PInstance.h"
 #include "PClass.h"
+#include "PDict.h"
 namespace vm {
 PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), PC(0), isRunning(false)
 {
@@ -287,7 +288,7 @@ void PVM::store_attr_execute(QVariant operand, bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto funcObj = dynamicPointerCast<PFunction>(iter.value());
             auto param = QVector<pointer>{ toAttr, makeShared<PStr>(attrName), value };
-            funcObj->__call__(makeShared<PList>(param), newEnvir);
+            funcObj->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             auto newCode = funcObj->getCodeObj();
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
@@ -340,7 +341,7 @@ void PVM::load_attr_execute(QVariant operand, bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto funcObj = dynamicPointerCast<PFunction>(iter.value());
             auto param = QVector<pointer>{ toAttr, makeShared<PStr>(attrName) };
-            funcObj->__call__(makeShared<PList>(param), newEnvir);
+            funcObj->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             auto newCode = funcObj->getCodeObj();
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
@@ -455,42 +456,51 @@ void PVM::loop_while_end_execute()
 
 void PVM::create_function_execute(QVariant operand)
 {
-    auto code = operand.toByteArray();
     auto isClassFunction = popValue()->getValue().toBool();
-    auto params = popValue();
-    auto name = popValue();
-    auto functionObj = makeShared<Py::PFunction>(params, code, name, isClassFunction);
+    auto dictObj = popValue();
+    auto listObj = popValue();
+    auto nameObj = popValue();
+    auto codeObj = operand.toByteArray();
+    auto functionObj = makeShared<Py::PFunction>(listObj, dictObj, codeObj, nameObj, isClassFunction);
     pushValue(functionObj);
     qDebug() << "以下是函数内部字节码";
-    for (const auto& innerCode : Instruction::fromByteArray(code)) {
+    for (const auto& innerCode : Instruction::fromByteArray(codeObj)) {
         qDebug() << innerCode.toString();
     }
     qDebug() << "函数字节码结束";
 }
 
+
+//auto newCode = function->getCodeObj();
+//callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+//currCodes = newCode;
+//isGo = false;
+//PC = 0;
 void PVM::call_execute(bool& isGo)
 {
     auto caller = popValue();
-    pointer trueParam = popValue();
+    pointer dictObj = popValue();
+    pointer listObj = popValue();
     auto funcCaller = popValue();
     auto newEnvir = createNewEnvironment(currEnvir());
     if (funcCaller->getType().type == Type::Instance)
     {
-        auto listobj = dynamicPointerCast<PList>(trueParam);
+        auto listobj = (PList*)(listObj.get());
         QVector<pointer> p = { funcCaller };
         p.append(listobj->getTrueValue());
-        trueParam = makeShared<PList>(p);
+        listObj = makeShared<PList>(p);
     }
     else if (caller->getType().type == Type::Class) {
-        auto classObj = dynamicPointerCast<PClass>(caller);
-        auto obj = caller->__call__(trueParam, currEnvir());
+        auto classObj = (PClass*)(caller.get());
+        auto obj = caller->__call__(listObj, dictObj, currEnvir());
         QVector<pointer> p = { obj };
-        pushValue(obj);
-        p.append(dynamicPointerCast<PList>(trueParam)->getTrueValue());
-        trueParam = makeShared<PList>(p);
-        auto initFunc = classObj->getFunctions()["__init__"];
-        initFunc->__call__(makeShared<PList>(p), newEnvir);
-        auto initFObj = dynamicPointerCast<PFunction>(initFunc);
+        // 以下的操作在虚拟机执行完以后会留下一个初始化好的类的实例（以供赋值）
+        pushValue(obj); 
+        p.append(((PList*)(listObj.get()))->getTrueValue());
+        listObj = makeShared<PList>(p);
+        auto initFunc = classObj->__getattribute__("__init__");
+        initFunc->__call__(makeShared<PList>(p), dictObj, newEnvir); // call仅作新环境的参数校验和赋值
+        auto initFObj = (PFunction*)(initFunc.get());
         auto newCode = initFObj->getCodeObj();
         callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
         currCodes = newCode;
@@ -499,56 +509,13 @@ void PVM::call_execute(bool& isGo)
         return;
     }
     // 其它情况不需要加
-    auto function = dynamicPointerCast<PFunction>(caller);
+    auto function = (PFunction*)(caller.get());
     auto newCode = function->getCodeObj();
     callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
     currCodes = newCode;
     isGo = false;
     PC = 0;
     return;
-    //auto caller = popValue(); 
-    //qDebug() << "caller.type is: " << TypeToString(caller->getType().type);
-    //qDebug() << "caller.value is(toString): " << caller->toString();
-    //auto params = popValue();
-    //auto newEnvir = createNewEnvironment(currEnvir());
-    //switch (caller->getType().type)
-    //{
-    //case Type::FunctionDefine: {
-    //    auto function = dynamicPointerCast<Py::PFunction>(caller);
-    //    caller->__call__(params, newEnvir);
-    //    auto newCode = function->getCodeObj();
-    //    callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
-    //    currCodes = newCode;
-    //    isGo = false;
-    //    PC = 0;
-    //    break;
-    //}
-    //case Type::Class: {
-    //    auto classObj = dynamicPointerCast<Py::PClass>(caller);
-    //    if (!classObj) {
-    //        throwErrMsg(u8"无效的caller");
-    //    }
-    //    for (const auto& p : classObj->getFunctions()) {
-    //        qDebug() << p->toString();
-    //    }
-    //    auto obj = classObj->__call__(params, newEnvir);
-    //    pushValue(obj); // 先压入栈，后面的是闭合操作，会把操作数栈顶重新变回obj，就能return回去
-    //    auto param = dynamicPointerCast<PList>(params);
-    //    auto initFunc = classObj->getFunctions()["__init__"];
-    //    QVector<pointer> p = { obj };
-    //    p.append(param->getTrueValue());
-    //    initFunc->__call__(makeShared<PList>(p), newEnvir);
-    //    auto initFObj = dynamicPointerCast<PFunction>(initFunc);
-    //    auto newCode = initFObj->getCodeObj();
-    //    callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
-    //    currCodes = newCode;
-    //    isGo = false;
-    //    PC = 0;
-    //    break;
-    //}
-    //default:
-    //    break;
-    //}
 }
 
 void PVM::return_execute(bool& isGo)
@@ -606,7 +573,7 @@ void PVM::add_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -630,7 +597,7 @@ void PVM::sub_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -654,7 +621,7 @@ void PVM::mul_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -678,7 +645,7 @@ void PVM::div_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -703,7 +670,7 @@ void PVM::mod_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -728,7 +695,7 @@ void PVM::pow_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -753,7 +720,7 @@ void PVM::eq_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -778,7 +745,7 @@ void PVM::neq_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -803,7 +770,7 @@ void PVM::gt_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -828,7 +795,7 @@ void PVM::ge_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -853,7 +820,7 @@ void PVM::lt_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -878,7 +845,7 @@ void PVM::le_execute(bool& isGo)
             auto newCode = func->getCodeObj();
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
-            func->__call__(makeShared<PList>(param), newEnvir);
+            func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
@@ -931,44 +898,58 @@ void PVM::run()
 
 PVM::~PVM()
 {
-    delete object;
+    //delete object; // 被智能指针干掉过一次
 }
 
 QString CodeToQString(Code code)
 {
     switch (code) {
+        // 加载字面量
     case Code::LOAD_INT:        return "LOAD_INT";
+    case Code::LOAD_TRUE:       return "LOAD_TRUE";
+    case Code::LOAD_FALSE:      return "LOAD_FALSE";
     case Code::LOAD_FLOAT:      return "LOAD_FLOAT";
     case Code::LOAD_STRING:     return "LOAD_STRING";
     case Code::LOAD_LIST:       return "LOAD_LIST";
+    case Code::LOAD_DICT:       return "LOAD_DICT";
     case Code::LOAD_NONE:       return "LOAD_NONE";
-    case Code::LOAD_TRUE:       return "LOAD_TRUE";
-    case Code::LOAD_FALSE:      return "LOAD_FALSE";
 
+        // 加载变量
     case Code::LOAD_NAME:       return "LOAD_NAME";
     case Code::LOAD_INDEX:      return "LOAD_INDEX";
     case Code::LOAD_ATTR:       return "LOAD_ATTR";
 
+        // 赋值
     case Code::STORE_VAR:       return "STORE_VAR";
     case Code::STORE_INDEX:     return "STORE_INDEX";
     case Code::STORE_ATTR:      return "STORE_ATTR";
 
+        // 跳转
     case Code::JUMP_IF_FALSE:   return "JUMP_IF_FALSE";
     case Code::JUMP:            return "JUMP";
 
+        // 迭代器
     case Code::CREATE_ITER:     return "CREATE_ITER";
     case Code::ITER_NEXT:       return "ITER_NEXT";
 
+        // 循环
     case Code::LOOP_START_FOR:  return "LOOP_START_FOR";
-    case Code::LOOP_START_WHILE:return "LOOP_START_WHILE";
-    case Code::CONTINUE:        return "CONTINUE"; 
+    case Code::LOOP_START_WHILE: return "LOOP_START_WHILE";
+    case Code::CONTINUE:        return "CONTINUE";
     case Code::BREAK:           return "BREAK";
     case Code::LOOP_FOR_END:    return "LOOP_FOR_END";
     case Code::LOOP_WHILE_END:  return "LOOP_WHILE_END";
 
-    case Code::CALL:            return "CALL";
+        // 函数
+    case Code::CREATE_FUNCTION: return "CREATE_FUNCTION";
     case Code::RETURN:          return "RETURN";
+    case Code::CALL:            return "CALL";
 
+        // 类定义
+    case Code::CREATE_CLASS:    return "CREATE_CLASS";
+    case Code::STORE_CLASS_VAR: return "STORE_CLASS_VAR";
+
+        // 算数
     case Code::ADD:             return "ADD";
     case Code::SUB:             return "SUB";
     case Code::MUL:             return "MUL";
@@ -976,6 +957,7 @@ QString CodeToQString(Code code)
     case Code::MOD:             return "MOD";
     case Code::POW:             return "POW";
 
+        // 比较
     case Code::EQ:              return "EQ";
     case Code::NEQ:             return "NEQ";
     case Code::GT:              return "GT";
@@ -987,10 +969,8 @@ QString CodeToQString(Code code)
     case Code::PRINT:           return "PRINT";
     case Code::HALT:            return "HALT";
     case Code::INVALID:         return "INVALID";
-    case Code::CREATE_FUNCTION: return "CREATE_FUNCTION";
-    case Code::CREATE_CLASS:    return "CREATE_CLASS";
 
-    default:                    return "UNKNOWN_CODE";
+    default:                    return "UNKNOWN";
     }
 }
 
@@ -1079,63 +1059,75 @@ QVector<Instruction> loadInstructionsFromTXT(const QString &filePath)
 
 Code QStringToCode(QString string)
 {
-    static const QHash<QString, Code> map = {
-        {"LOAD_INT",        Code::LOAD_INT},
-        {"LOAD_FLOAT",      Code::LOAD_FLOAT},
-        {"LOAD_STRING",     Code::LOAD_STRING},
-        {"LOAD_LIST",       Code::LOAD_LIST},
-        {"LOAD_NONE",       Code::LOAD_NONE},
+    static const QHash<QString, Code> stringToCode = {
+        // 加载字面量
+        {"LOAD_INT", Code::LOAD_INT},
+        {"LOAD_TRUE", Code::LOAD_TRUE},
+        {"LOAD_FALSE", Code::LOAD_FALSE},
+        {"LOAD_FLOAT", Code::LOAD_FLOAT},
+        {"LOAD_STRING", Code::LOAD_STRING},
+        {"LOAD_LIST", Code::LOAD_LIST},
+        {"LOAD_DICT", Code::LOAD_DICT},
+        {"LOAD_NONE", Code::LOAD_NONE},
 
-        {"LOAD_NAME",       Code::LOAD_NAME},
-        {"LOAD_INDEX",      Code::LOAD_INDEX},
-        {"LOAD_ATTR",       Code::LOAD_ATTR},
+        // 加载变量
+        {"LOAD_NAME", Code::LOAD_NAME},
+        {"LOAD_INDEX", Code::LOAD_INDEX},
+        {"LOAD_ATTR", Code::LOAD_ATTR},
 
-        {"STORE_VAR",       Code::STORE_VAR},
-        {"STORE_INDEX",     Code::STORE_INDEX},
-        {"STORE_ATTR",      Code::STORE_ATTR},
+        // 赋值
+        {"STORE_VAR", Code::STORE_VAR},
+        {"STORE_INDEX", Code::STORE_INDEX},
+        {"STORE_ATTR", Code::STORE_ATTR},
 
-        {"JUMP_IF_FALSE",   Code::JUMP_IF_FALSE},
-        {"JUMP",            Code::JUMP},
+        // 跳转
+        {"JUMP_IF_FALSE", Code::JUMP_IF_FALSE},
+        {"JUMP", Code::JUMP},
 
-        {"CREATE_ITER",     Code::CREATE_ITER},
-        {"ITER_NEXT",       Code::ITER_NEXT},
+        // 迭代器
+        {"CREATE_ITER", Code::CREATE_ITER},
+        {"ITER_NEXT", Code::ITER_NEXT},
 
-        {"LOOP_START_FOR",  Code::LOOP_START_FOR},
-        {"LOOP_START_WHILE",Code::LOOP_START_WHILE},
-        {"CONTINUE",        Code::CONTINUE},
-        {"BREAK",           Code::BREAK},
-        {"LOOP_FOR_END",    Code::LOOP_FOR_END},
-        {"LOOP_WHILE_END",  Code::LOOP_WHILE_END},
+        // 循环
+        {"LOOP_START_FOR", Code::LOOP_START_FOR},
+        {"LOOP_START_WHILE", Code::LOOP_START_WHILE},
+        {"CONTINUE", Code::CONTINUE},
+        {"BREAK", Code::BREAK},
+        {"LOOP_FOR_END", Code::LOOP_FOR_END},
+        {"LOOP_WHILE_END", Code::LOOP_WHILE_END},
 
-        {"CALL",            Code::CALL},
-        {"RETURN",          Code::RETURN},
+        // 函数
+        {"CREATE_FUNCTION", Code::CREATE_FUNCTION},
+        {"RETURN", Code::RETURN},
+        {"CALL", Code::CALL},
 
-        {"ADD",             Code::ADD},
-        {"SUB",             Code::SUB},
-        {"MUL",             Code::MUL},
-        {"DIV",             Code::DIV},
-        {"MOD",             Code::MOD},
-        {"POW",             Code::POW},
+        // 类定义
+        {"CREATE_CLASS", Code::CREATE_CLASS},
+        {"STORE_CLASS_VAR", Code::STORE_CLASS_VAR},
 
-        {"EQ",              Code::EQ},
-        {"NEQ",             Code::NEQ},
-        {"GT",              Code::GT},
-        {"GE",              Code::GE},
-        {"LT",              Code::LT},
-        {"LE",              Code::LE},
+        // 算数
+        {"ADD", Code::ADD},
+        {"SUB", Code::SUB},
+        {"MUL", Code::MUL},
+        {"DIV", Code::DIV},
+        {"MOD", Code::MOD},
+        {"POW", Code::POW},
 
-        {"POP",             Code::POP},
-        {"PRINT",           Code::PRINT},
-        {"HALT",            Code::HALT},
-        {"INVALID",         Code::INVALID},
-        
+        // 比较
+        {"EQ", Code::EQ},
+        {"NEQ", Code::NEQ},
+        {"GT", Code::GT},
+        {"GE", Code::GE},
+        {"LT", Code::LT},
+        {"LE", Code::LE},
+
+        {"POP", Code::POP},
+        {"PRINT", Code::PRINT},
+        {"HALT", Code::HALT},
+        {"INVALID", Code::INVALID}
     };
 
-    auto it = map.find(string);
-    if (it != map.end()) {
-        return it.value();
-    }
-    return Code::INVALID;
+    return stringToCode.value(string, Code::INVALID);
 }
 
 }

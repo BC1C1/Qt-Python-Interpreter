@@ -111,6 +111,9 @@
     <ClCompile Include="PDict.cpp">
       <Filter>源文件\core\objects\runtime</Filter>
     </ClCompile>
+    <ClCompile Include="PSuper.cpp">
+      <Filter>源文件\core\objects\runtime</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="..\..\..\qt\python\mainwindow.ui">
@@ -154,9 +157,6 @@
     <QtMoc Include="core\objects\runtime\pstr.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="core\utils\functions.h">
-      <Filter>头文件\core\utils</Filter>
-    </QtMoc>
     <QtMoc Include="MainWindow.h">
       <Filter>头文件</Filter>
     </QtMoc>
@@ -181,6 +181,12 @@
       <Filter>头文件\core\objects\runtime</Filter>
     </ClInclude>
     <ClInclude Include="PDict.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\functions.h">
+      <Filter>头文件\core\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="PSuper.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </ClInclude>
   </ItemGroup>

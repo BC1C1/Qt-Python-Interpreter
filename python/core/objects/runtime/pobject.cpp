@@ -195,13 +195,18 @@ PObject::pointer PObject::__getitem__(const PObject::pointer &)
     return nullptr;
 }
 
-PObject::pointer PObject::__call__(const PObject::pointer&, QSharedPointer<Environment> )
+PObject::pointer PObject::__call__(
+    const PObject::pointer&, 
+    const pointer&, 
+    QSharedPointer<Environment> 
+)
 {
     defaultNoCallFuncError();
     return nullptr;
 }
 
-PObject::pointer PObject::__instance__(const PObject::pointer &, QSharedPointer<Environment> )
+PObject::pointer PObject::__instance__(const pointer& listParams, 
+    const pointer& dictParams, QSharedPointer<Environment> envir)
 {
     defaultNoInstanceError();
     return nullptr;
@@ -216,6 +221,11 @@ PObject::pointer PObject::__getattribute__(const QString &)
 void PObject::__setattribute__(const QString &, const PObject::pointer &)
 {
     defaultNoSetAttributeError();
+}
+
+QVector<PClass*> PObject::__mro__()
+{
+    return QVector<PClass*>();
 }
 
 PObject::pointer PObject::noSuchCast(const std::string &name) const
@@ -267,6 +277,11 @@ PObject::pointer PObject::defaultNoGetAttributeError() const
 PObject::pointer PObject::defaultNoSetAttributeError() const
 {
     throw runtime_error(u8"__setattribute__未实现");
+}
+
+PObject::pointer PObject::defaultNoMroError() const
+{
+    throw runtime_error(u8"__mro__未实现");
 }
 
 

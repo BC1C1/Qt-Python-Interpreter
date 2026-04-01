@@ -17,7 +17,7 @@ using runtime_error = std::runtime_error;
 
 enum class Type {
     Int, Float, Str, Bool, None, Undefined, Iterator, List, FunctionDefine,
-    ReturnValue, Class, Instance, Dict
+    ReturnValue, Class, Instance, Dict, Super
 };
 QString TypeToString(Type type);
 struct PyType {
@@ -76,12 +76,22 @@ public:
     virtual pointer __getitem__(const pointer& index);
 
     // 对象的调用办法
-    virtual pointer __call__(const pointer& params, QSharedPointer<Environment> envir);
+    virtual pointer __call__(
+        const pointer& listParams,
+        const pointer& dictParams,
+        QSharedPointer<Environment> envir
+    );
 
     // 对象实例化、属性访问和存储
-    virtual pointer __instance__(const pointer& params, QSharedPointer<Environment> envir);
+    virtual pointer __instance__(
+        const pointer& listParams,
+        const pointer& dictParams,
+        QSharedPointer<Environment> envir);
     virtual pointer __getattribute__(const QString& attributeName);
     virtual void __setattribute__(const QString& attributeName, const pointer& obj);
+
+    // mro获取
+    virtual QVector<PClass*> __mro__();
 protected:
     // 错误处理函数声明
     pointer noSuchCast(const std::string& name) const;
@@ -103,6 +113,8 @@ protected:
     pointer defaultNoGetAttributeError() const;
 
     pointer defaultNoSetAttributeError() const;
+
+    pointer defaultNoMroError() const;
 private:
     PyType type;
 signals:
@@ -120,7 +132,8 @@ static const std::map<Type, PyType> typeMap = {
     {Type::ReturnValue, PyType{Type::ReturnValue}},
     {Type::Class, PyType{Type::Class}},
     {Type::Instance, PyType{Type::Instance}},
-    {Type::Dict, PyType{Type::Dict}}
+    {Type::Dict, PyType{Type::Dict}},
+    {Type::Super, PyType{Type::Super}},
 };
 class PInt;
 class PFloat;
@@ -134,6 +147,7 @@ class PReturnValue;
 class PClass;
 class PInstance;
 class PDict;
+class PSuper;
 }
 
 

@@ -238,21 +238,26 @@ pointer Parser::parseFunction()
     auto functionName = getTokens()[current].lexeme;
     current++;
     consume(TokenType::LPAREN, "缺少参数左括号");
-    std::vector<pointer> params;
+    std::vector<pointer> listParams;
     do {
         if (check(TokenType::RPAREN))
             break;
-        auto ele = parseExpression();
+        auto ele = parseAssign();
         if (ele)
-            params.push_back(ele);
-        else
-            throwErrorMsg("无效的参数");
+            listParams.push_back(ele);
+        else {
+            ele = parseExpression();
+            if (ele)
+                listParams.push_back(ele);
+            else
+                throwErrorMsg("无效的参数");
+        }
     } while (match(TokenType::COMMA));
     consume(TokenType::RPAREN, "缺少参数右括号");
     consume(TokenType::COLON, "函数缺少冒号");
     int line = getInstantLine();
     auto block = parseBlock(true);
-    auto param = makeShared<List>(std::move(params), line);
+    auto param = makeShared<List>(std::move(listParams), line);
     return makeShared<Function>(line, functionName, param, block);
 }
 
@@ -499,9 +504,17 @@ pointer Parser::parsePrimary()
         case Lex::TokenType::LPAREN: {
             std::vector<pointer> expressions;
             while (!check(TokenType::RPAREN)) {
-                auto ele = parseExpression();
-                if (ele)
+                auto ele = parseAssign();
+                if (ele) {
                     expressions.push_back(ele);
+                }
+                else {
+                    ele = parseExpression();
+                    if (ele)
+                        expressions.push_back(ele);
+                    else
+                        throwErrorMsg(u8"无效的元素");
+                }
                 if (match(TokenType::COMMA)) {
                     continue;
                 }

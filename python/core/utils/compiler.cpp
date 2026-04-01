@@ -46,28 +46,63 @@ void Compiler::compileFunctions(APointer node)
             continue;
         auto functionStmt = dynamicPointerCast<Parse::Function>(s);
         auto name = QString::fromStdString(functionStmt->functionName);
-        auto params = dynamicPointerCast<Parse::List>(functionStmt->params);
+        auto listParams = dynamicPointerCast<Parse::List>(functionStmt->listParams);
         auto block = functionStmt->block;
-
+        // 1. name
         cache.push_back(Instruction{Code::LOAD_STRING, name}); // name
-        for (const auto& e : params->elements) {
-            auto eObj = dynamicPointerCast<Parse::Variable>(e);
-            if (eObj)
-                cache.push_back(Instruction{Code::LOAD_STRING, QString::fromStdString(eObj->name)});
-            else
-                throw std::runtime_error("无效的函数参数");
+        QVector<Parse::pointer> posparams;
+        QVector<Parse::pointer> keyparams;
+        bool isTransed = false;
+        for (const auto& e : listParams->elements) {
+            switch (e->getType())
+            {
+            case NodeType::Variable: {
+                if (isTransed)
+                    throw std::runtime_error(u8"关键字参数不能先于位置参数");
+                posparams.append(e);
+                break;
+            }
+            case NodeType::Assignment: {
+                if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable)
+                    throw std::runtime_error(u8"无效的函数参数");
+                keyparams.append(e);
+                isTransed = true;
+                break;
+            }
+            default:
+                throw std::runtime_error(u8"无效的函数参数");
+                break;
+            }
         }
-        cache.push_back(Instruction{Code::LOAD_INT, params->elements.size()});
-        cache.push_back(Instruction{Code::LOAD_LIST}); // params
+        // 2. 首先是一个PList不变
+        for (const auto& pose : posparams) {
+            compileExpression(pose);
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, posparams.size() });
+        cache.push_back(Instruction{ Code::LOAD_LIST });
+        // 3. 字典
+        for (const auto& keye : keyparams) {
+            auto assign = (Parse::Assignment*)keye.get();
+            compileExpression(assign->left);
+            compileExpression(assign->right);
+        }
+        cache.push_back(Instruction{Code::LOAD_INT, keyparams.size()});
+        cache.push_back(Instruction{Code::LOAD_DICT}); 
+        // 4. 内部代码
         Compiler compiler;
         compiler.setAst(block);
         compiler.compileAST();
         auto code = compiler.cache;
+        code.push_back(Instruction{ Code::RETURN });
         auto codeByte = Instruction::toByteArray(code);
-        code.push_back(Instruction{Code::RETURN});
+        // 5. 是函数内部代码吗
         cache.push_back(Instruction{ Code::LOAD_FALSE });
+        // 6. 创建
         cache.push_back(Instruction{Code::CREATE_FUNCTION, codeByte});
+        // 7. 普通函数直接把函数对象绑定到name上
         cache.push_back(Instruction{Code::STORE_VAR, name});
+        // stack(from b to top):
+        // nameObj, ListObj(posParams), DictObj(keyParams), boolObj(isfunctioninclass)
     }
 }
 
@@ -75,19 +110,50 @@ void Compiler::compileFunctionInClass(APointer node)
 {
     auto functionStmt = dynamicPointerCast<Parse::Function>(node);
     auto name = QString::fromStdString(functionStmt->functionName);
-    auto params = dynamicPointerCast<Parse::List>(functionStmt->params);
+    auto listParams = dynamicPointerCast<Parse::List>(functionStmt->listParams);
     auto block = functionStmt->block;
 
     cache.push_back(Instruction{ Code::LOAD_STRING, name }); // name
-    for (const auto& e : params->elements) {
-        auto eObj = dynamicPointerCast<Parse::Variable>(e);
-        if (eObj)
-            cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(eObj->name) });
-        else
-            throw std::runtime_error("无效的函数参数");
+    QVector<Parse::pointer> posparams;
+    QVector<Parse::pointer> keyparams;
+    bool isTransed = false;
+    for (const auto& e : listParams->elements) {
+        switch (e->getType())
+        {
+        case NodeType::Variable: {
+            if (isTransed)
+                throw std::runtime_error(u8"关键字参数不能先于位置参数");
+            posparams.append(e);
+            break;
+        }
+        case NodeType::Assignment: {
+            if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable)
+                throw std::runtime_error(u8"无效的函数参数");
+            keyparams.append(e);
+            isTransed = true;
+            break;
+        }
+        default:
+            throw std::runtime_error(u8"无效的函数参数");
+            break;
+        }
     }
-    cache.push_back(Instruction{ Code::LOAD_INT, params->elements.size() });
-    cache.push_back(Instruction{ Code::LOAD_LIST }); // params
+    // 2. 首先是一个PList不变
+    for (const auto& pose : posparams) {
+        auto name = QString::fromStdString(((Parse::Variable*)(pose.get()))->name);
+        cache.push_back(Instruction{ Code::LOAD_STRING, name});
+    }
+    cache.push_back(Instruction{ Code::LOAD_INT, posparams.size() });
+    cache.push_back(Instruction{ Code::LOAD_LIST });
+    // 3. 字典
+    for (const auto& keye : keyparams) {
+        auto assign = (Parse::Assignment*)keye.get();
+        auto name = QString::fromStdString(((Parse::Variable*)(assign->left.get()))->name);
+        cache.push_back(Instruction{ Code::LOAD_STRING, name });
+        compileExpression(assign->right);
+    }
+    cache.push_back(Instruction{ Code::LOAD_INT, keyparams.size() });
+    cache.push_back(Instruction{ Code::LOAD_DICT }); // params
     Compiler compiler;
     compiler.setAst(block);
     compiler.compileAST();
@@ -256,23 +322,57 @@ void Compiler::compileExpression(APointer node)
         break;
     }
     case NodeType::Call: {
-        auto callStmt = dynamicPointerCast<Parse::Call>(node);
+        auto callStmt = (Parse::Call*)node.get();
         auto& left = callStmt->caller;
         // 1.
         if (left->getType() == NodeType::Attribute)
             compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller);
         else
             cache.push_back(Instruction{ Code::LOAD_NONE });
-        // 2.
+        QVector<Parse::pointer> posParams;
+        QVector<Parse::pointer> keyParams;
+        bool isTransed = false;
         for (const auto& e : callStmt->params) {
-            compileExpression(e);
+            switch (e->getType())
+            {
+            case NodeType::Variable: {
+                if (isTransed) 
+                    throw std::runtime_error(u8"关键字参数不能先于位置参数");
+                posParams.append(e);
+                break;
+            }
+            case NodeType::Assignment: {
+                if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable) {
+                    throw std::runtime_error(u8"无效的参数");
+                }
+                isTransed = true;
+                keyParams.append(e);
+                break;
+            }
+            default:
+                throw std::runtime_error(u8"无效的参数");
+                break;
+            }
         }
-        cache.push_back(Instruction{ Code::LOAD_INT, callStmt->params.size() });
+        // 2.
+        for (const auto& pe : posParams) {
+            compileExpression(pe);
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, posParams.size() });
         cache.push_back(Instruction{ Code::LOAD_LIST });
         // 3.
-        compileExpression(callStmt->caller); // 之前没讲全，也要把函数对象加载进栈
+        for (const auto& ke : keyParams) {
+            auto assign = (Parse::Assignment*)ke.get();
+            compileExpression(assign->left);
+            compileExpression(assign->right);
+        }
+        cache.push_back(Instruction{ Code::LOAD_INT, keyParams.size() });
+        cache.push_back(Instruction{ Code::LOAD_DICT });
         // 4.
+        compileExpression(callStmt->caller); 
+        // 5.
         cache.push_back(Instruction{ Code::CALL });
+        // caller's caller, listObj, dictObj, callerObj(func, class)
         break;
     }
     default:{
@@ -409,7 +509,7 @@ void Compiler::compileStatement(APointer node)
         break;
     }
     case NodeType::For: {
-//        auto forStmt = dynamicPointerCast<Parse::For>(node);
+        /*        auto forStmt = dynamicPointerCast<Parse::For>(node);
 //        // iter = listObj.__iter__() 1
 //        // label: here               2
 //        // loopVar = iter.__next__() 3
@@ -441,6 +541,7 @@ void Compiler::compileStatement(APointer node)
 //            }
 //        }
 //        break;
+*/
         auto forStmt = dynamicPointerCast<Parse::For>(node);
         auto varStdName = dynamicPointerCast<Parse::Variable>(forStmt->loopVar)->name;
         QString varName = QString::fromStdString(varStdName);
@@ -485,32 +586,32 @@ void Compiler::compileStatement(APointer node)
         cache.push_back(Instruction{Code::RETURN});
         break;
     }
-    case NodeType::Call: {
-        auto callStmt = dynamicPointerCast<Parse::Call>(node);
-        auto& left = callStmt->caller;
-        // 1.
-        if (left->getType() == NodeType::Attribute)
-            compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller);
-        else
-            cache.push_back(Instruction{ Code::LOAD_NONE });
-        // 2.
-        for (const auto& e : callStmt->params) {
-            compileExpression(e);
-        }
-        cache.push_back(Instruction{ Code::LOAD_INT, callStmt->params.size() });
-        cache.push_back(Instruction{ Code::LOAD_LIST });
-        // 3.
-        compileExpression(callStmt->caller); // 之前没讲全，也要把函数对象加载进栈
-        // 4.
-        cache.push_back(Instruction{ Code::CALL });
-        break;
-    }
+    //case NodeType::Call: {
+    //    auto callStmt = dynamicPointerCast<Parse::Call>(node);
+    //    auto& left = callStmt->caller;
+    //    // 1.
+    //    if (left->getType() == NodeType::Attribute)
+    //        compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller);
+    //    else
+    //        cache.push_back(Instruction{ Code::LOAD_NONE });
+    //    // 2.
+    //    for (const auto& e : callStmt->listParams) {
+    //        compileExpression(e);
+    //    }
+    //    cache.push_back(Instruction{ Code::LOAD_INT, callStmt->listParams.size() });
+    //    cache.push_back(Instruction{ Code::LOAD_LIST });
+    //    // 3.
+    //    compileExpression(callStmt->caller); // 之前没讲全，也要把函数对象加载进栈
+    //    // 4.
+    //    cache.push_back(Instruction{ Code::CALL });
+    //    break;
+    //}
     case NodeType::Class: {
         break;
     }
     default:
-        throwErrorLine(node->getLine());
-        throw std::runtime_error("无效的语句");
+        compileExpression(node);
+        break;
     }
 }
 

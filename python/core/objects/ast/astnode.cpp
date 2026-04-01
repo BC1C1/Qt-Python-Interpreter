@@ -345,8 +345,8 @@ QJsonObject For::toJson() const
     return ret;
 }
 
-Function::Function(int line, const std::string& functionName, pointer params, pointer block)
-    : ANode(NodeType::FunctionDefine, line), functionName(functionName), params(params), block(block)
+Function::Function(int line, const std::string& functionName, pointer listParams, pointer block)
+    : ANode(NodeType::FunctionDefine, line), functionName(functionName), listParams(listParams), block(block)
 {
 
 }
@@ -355,7 +355,7 @@ QJsonObject Function::toJson() const
 {
     QJsonObject ret;
     ret["type"] = "Function";
-    ret["params"] = params->toJson();
+    ret["params"] = listParams->toJson();
     ret["functionNamee"] = QString::fromStdString(functionName);
     ret["block"] = block->toJson();
     ret["line"] = getLine();
