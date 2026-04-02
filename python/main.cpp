@@ -34,27 +34,17 @@ inline uint qHash(const pointer& p, uint seed = 0)
 int main(int argc, char *argv[])
 {
     std::string code1 = R"(
-# 顶层类，有方法
 class A:
-    def hello(self):
-        print("Hello from A")
-
-# B 继承 A，空实现（pass）
+    def __init__(self):
+        self.a = 1
 class B(A):
-    pass
-
-# C 继承 A，重写方法
-class C(A):
-    def hello(self):
-        print("Hello from C")
-
-# D 多继承 B、C，空实现（pass）
-class D(B, C):
-    pass
-
-# 测试调用
-d = D()
-d.hello()
+    def __init__(self):
+        super().__init__(self)
+        self.b = 2
+b = B()
+print(b.b)
+print(b.a)
+print(b.A.a)
 )";
 
     try {

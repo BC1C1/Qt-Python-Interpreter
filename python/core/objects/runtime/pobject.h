@@ -27,6 +27,19 @@ struct PyType {
     bool operator==(PyType other);
 };
 class Environment;
+class PInt;
+class PFloat;
+class PBool;
+class PStr;
+class PNone;
+class Iterator;
+class PList;
+class PFunction;
+class PReturnValue;
+class PClass;
+class PInstance;
+class PDict;
+class PSuper;
 class PObject : public QObject, public QEnableSharedFromThis<PObject>
 {
     Q_OBJECT

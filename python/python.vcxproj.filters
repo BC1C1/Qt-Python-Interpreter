@@ -142,9 +142,6 @@
     <QtMoc Include="core\objects\runtime\pvm.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="core\objects\runtime\blockandframe.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
     <QtMoc Include="core\objects\runtime\pbool.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
@@ -187,6 +184,9 @@
       <Filter>头文件\core\utils</Filter>
     </ClInclude>
     <ClInclude Include="PSuper.h">
+      <Filter>头文件\core\objects\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="core\objects\runtime\blockandframe.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </ClInclude>
   </ItemGroup>

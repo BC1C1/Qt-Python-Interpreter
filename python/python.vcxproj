@@ -179,7 +179,7 @@
     <ClInclude Include="PDict.h" />
     <ClInclude Include="PInstance.h" />
     <ClInclude Include="PSuper.h" />
-    <QtMoc Include="core\objects\runtime\blockandframe.h" />
+    <ClInclude Include="core\objects\runtime\blockandframe.h" />
     <QtMoc Include="core\objects\runtime\pbool.h" />
     <QtMoc Include="core\objects\runtime\pfloat.h" />
     <ClInclude Include="core\objects\runtime\pfunction.h" />

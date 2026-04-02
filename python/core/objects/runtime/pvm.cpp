@@ -13,11 +13,12 @@
 #include "PInstance.h"
 #include "PClass.h"
 #include "PDict.h"
+#include "PSuper.h"
 namespace vm {
 PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), PC(0), isRunning(false)
 {
     auto defaultEnvir = makeShared<Environment>(nullptr, this);
-    callFrameStack.push(makeCallFrame(0, defaultEnvir, Instruction::toByteArray(codes)));
+    callFrameStack.push(makeCallFrame(0, defaultEnvir, nullptr, nullptr, Instruction::toByteArray(codes)));
     currCodes = codes;
     initRootObject();
     PClass::object = object;
@@ -76,6 +77,8 @@ void PVM::executeSingleCode()
     case Code::CALL:                call_execute(isGo);                 break;
     case Code::RETURN:              return_execute(isGo);               break;
     case Code::CREATE_CLASS:        create_class_execute(operand);      break;
+
+    case Code::CREATE_SUPER:        create_super_execute();             break;
 
     case Code::ADD:                 add_execute(isGo);                  break;
     case Code::SUB:                 sub_execute(isGo);                  break;
@@ -196,6 +199,16 @@ EPointer PVM::currEnvir()
     return callFrameStack.top().innerEnvir;
 }
 
+pointer PVM::getCurrSelfInstance()
+{
+    return callFrameStack.top().selfInstance;
+}
+
+pointer PVM::getCurrFuncBelongClass()
+{
+    return callFrameStack.top().funcBeloneClass;
+}
+
 void PVM::halt_execute()
 {
     qDebug() << "收到HALT停机指令";
@@ -282,7 +295,8 @@ void PVM::store_attr_execute(QVariant operand, bool& isGo)
     if (toAttr->getType().type == Type::Instance) {
         auto result = toAttr->__getattribute__(attrName);
         auto instance = dynamicPointerCast<Py::PInstance>(toAttr);
-        auto functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__setattr__");
         if (iter != functions.end()) {
             auto newEnvir = createNewEnvironment(currEnvir());
@@ -290,7 +304,7 @@ void PVM::store_attr_execute(QVariant operand, bool& isGo)
             auto param = QVector<pointer>{ toAttr, makeShared<PStr>(attrName), value };
             funcObj->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             auto newCode = funcObj->getCodeObj();
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -335,7 +349,8 @@ void PVM::load_attr_execute(QVariant operand, bool& isGo)
             return;
         }
         auto instance = dynamicPointerCast<Py::PInstance>(toAttr);
-        auto functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__getattr__");
         if (iter != functions.end()) {
             auto newEnvir = createNewEnvironment(currEnvir());
@@ -343,7 +358,7 @@ void PVM::load_attr_execute(QVariant operand, bool& isGo)
             auto param = QVector<pointer>{ toAttr, makeShared<PStr>(attrName) };
             funcObj->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
             auto newCode = funcObj->getCodeObj();
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -454,6 +469,40 @@ void PVM::loop_while_end_execute()
     popFrame();
 }
 
+void PVM::create_super_execute()
+{
+    int argc = popValue()->getValue().toInt();
+
+    pointer classObj = nullptr;
+    pointer instance = nullptr;
+
+    if (argc == 0) {
+        instance = getCurrSelfInstance();
+        classObj = getCurrFuncBelongClass();
+    }
+    else if (argc == 1) {
+        classObj = popValue();
+        instance = getCurrSelfInstance();
+    }
+    else if (argc == 2) {
+        instance = popValue();
+        classObj = popValue();
+    }
+    else {
+        throwErrMsg("super() 最多只能传入2个参数");
+    }
+
+    if (!instance) {
+        throwErrMsg("super() 必须在实例方法中调用，无法获取实例对象");
+    }
+    if (!classObj) {
+        throwErrMsg("super() 调用位置错误，无法获取当前所属类");
+    }
+
+    auto superObj = makeShared<PSuper>(instance, classObj);
+    pushValue(superObj);
+}
+
 void PVM::create_function_execute(QVariant operand)
 {
     auto isClassFunction = popValue()->getValue().toBool();
@@ -502,7 +551,7 @@ void PVM::call_execute(bool& isGo)
         initFunc->__call__(makeShared<PList>(p), dictObj, newEnvir); // call仅作新环境的参数校验和赋值
         auto initFObj = (PFunction*)(initFunc.get());
         auto newCode = initFObj->getCodeObj();
-        callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+        callFrameStack.push(makeCallFrame(PC + 1, newEnvir, obj, caller, Instruction::toByteArray(newCode)));
         currCodes = newCode;
         isGo = false;
         PC = 0;
@@ -511,7 +560,8 @@ void PVM::call_execute(bool& isGo)
     // 其它情况不需要加
     auto function = (PFunction*)(caller.get());
     auto newCode = function->getCodeObj();
-    callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+    caller->__call__(listObj, dictObj, newEnvir);
+    callFrameStack.push(makeCallFrame(PC + 1, newEnvir, nullptr, nullptr, Instruction::toByteArray(newCode)));
     currCodes = newCode;
     isGo = false;
     PC = 0;
@@ -566,7 +616,8 @@ void PVM::add_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__add__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -574,7 +625,7 @@ void PVM::add_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -590,7 +641,8 @@ void PVM::sub_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__sub__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -598,7 +650,7 @@ void PVM::sub_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -614,7 +666,8 @@ void PVM::mul_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__mul__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -622,7 +675,7 @@ void PVM::mul_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -638,7 +691,8 @@ void PVM::div_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__truediv__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -646,7 +700,7 @@ void PVM::div_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -663,7 +717,8 @@ void PVM::mod_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__mod__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -671,7 +726,7 @@ void PVM::mod_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -688,7 +743,8 @@ void PVM::pow_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__pow__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -696,7 +752,7 @@ void PVM::pow_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -713,7 +769,8 @@ void PVM::eq_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__eq__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -721,7 +778,7 @@ void PVM::eq_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -738,7 +795,8 @@ void PVM::neq_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__ne__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -746,7 +804,7 @@ void PVM::neq_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -763,7 +821,8 @@ void PVM::gt_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__gt__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -771,7 +830,7 @@ void PVM::gt_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -788,7 +847,8 @@ void PVM::ge_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__ge__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -796,7 +856,7 @@ void PVM::ge_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -813,7 +873,8 @@ void PVM::lt_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__lt__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -821,7 +882,7 @@ void PVM::lt_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;
@@ -838,7 +899,8 @@ void PVM::le_execute(bool& isGo)
     auto obj1 = popValue();
     if (obj1->getType().type == Type::Instance) {
         auto instance = dynamicPointerCast<PInstance>(obj1);
-        auto& functions = instance->getClassObj()->getFunctions();
+        auto classObj = (PClass*)(instance->getClassObj().get());
+        auto& functions = classObj->getFunctions();
         auto iter = functions.find("__le__");
         if (iter != functions.end()) {
             auto func = dynamicPointerCast<PFunction>(iter.value());
@@ -846,7 +908,7 @@ void PVM::le_execute(bool& isGo)
             auto newEnvir = createNewEnvironment(currEnvir());
             auto param = QVector<pointer>{ obj1, obj2 };
             func->__call__(makeShared<PList>(param), makeShared<PDict>(), newEnvir);
-            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, Instruction::toByteArray(newCode)));
+            callFrameStack.push(makeCallFrame(PC + 1, newEnvir, instance, instance->getClassObj(), Instruction::toByteArray(newCode)));
             currCodes = newCode;
             isGo = false;
             PC = 0;

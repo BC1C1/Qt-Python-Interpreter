@@ -6,13 +6,20 @@
 namespace vm {
 
 
-CallFrame makeCallFrame(int fromWhere, EPointer newEnvir, const QByteArray &codes)
+CallFrame makeCallFrame(
+    int fromWhere, 
+    EPointer newEnvir,
+    pointer selfInstance, 
+    pointer funcBelongClass,
+    const QByteArray &codes)
 {
     return CallFrame {
         fromWhere,
                 makeShared<Py::PNone>(),
                 newEnvir,
-                codes
+                codes,
+                selfInstance,
+                funcBelongClass
     };
 }
 

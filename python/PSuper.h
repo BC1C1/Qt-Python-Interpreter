@@ -6,13 +6,20 @@ namespace Py {
 	{
 		using pointer = PObject::pointer;
 	public:
-		PSuper(PClass* currClass, pointer instance);
+		PSuper(pointer currClass, pointer instance);
+		virtual QString toString() const override;
 
 		pointer getNextClass();
 
+		virtual pointer __call__(const pointer& listParams,
+			const pointer& dictParams,
+			QSharedPointer<Environment> envir) override;
+
+		virtual pointer __getattribute__(const QString& attrName) override;
+
 	private:
 		pointer instance;
-		PClass* currClass;
+		pointer currClass;
 	};
 }
 

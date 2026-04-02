@@ -7,10 +7,11 @@
 #include "PDict.h"
 
 namespace Py {
-	PInstance::PInstance(EPointer envir, PClass* classObj) : PObject(typeMap.at(Type::Instance)),
+	PInstance::PInstance(EPointer envir, pointer classObj) : PObject(typeMap.at(Type::Instance)),
 		classObj(classObj)
 	{
-		auto& classStaticMembers = classObj->getStaticMembers();
+		auto classobj = (PClass*)(classObj.get());
+		auto& classStaticMembers = classobj->getStaticMembers();
 		privateMembers = MemberMap(classStaticMembers.begin(), classStaticMembers.end());
 		auto dict_obj = makeShared<PDict>();
 		privateMembers.insert("__dict__", dict_obj);
@@ -21,7 +22,7 @@ namespace Py {
 		return QString("a instance of %1").arg(classObj->toString());
 	}
 
-	PClass* PInstance::getClassObj() const
+	pointer PInstance::getClassObj() const
 	{
 		return classObj;
 	}
@@ -43,6 +44,10 @@ namespace Py {
 		//	return iter.value();
 		//}
 		return classObj->__getattribute__(attrName);
+	}
+	pointer PInstance::__cls__() const
+	{
+		return classObj;
 	}
 	pointer PInstance::__eq__(const pointer& other) const
 	{

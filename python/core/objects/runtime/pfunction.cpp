@@ -53,26 +53,38 @@ Py::PObject::pointer PFunction::__call__(const pointer& listParams,
     auto listObj = (PList*)(listParams.get());
     auto dictObj = (PDict*)(dictParams.get());
 
+    auto& fl = ((PList*)(this->listParams.get()))->getTrueValue();
+    auto& tl = listObj->getTrueValue();
+    auto& fd = ((PDict*)(this->dictParams.get()))->getTrueValue();
+    auto& td = dictObj->getTrueValue();
+
     QSet<pointer> assigned;
 
     // pos assign
-    auto& fl = ((PList*)(this->listParams.get()))->getTrueValue();
-    auto& tl = listObj->getTrueValue();
-    if (tl.size() > fl.size()) {
+    if (tl.size() > fl.size() + fd.size()) {
         auto dsize = tl.size() - fl.size();
         QString errMsg = QString(u8"位置参数过多: 形参数量：%1，实参数量：%2")
-            .arg(fl.size()).arg(tl.size());
+            .arg(fl.size() + fd.size()).arg(tl.size());
         throw std::runtime_error(errMsg.toStdString());
     }
     // 逐个赋值
-    for (int i = 0; i < tl.size(); i++) {
+    int assignCount = qMin(tl.size(), fl.size());
+    for (int i = 0; i < assignCount; i++) {
         assigned.insert(fl[i]);
         newEnvir->assign(fl[i]->toString(), tl[i]);
     }
 
+    int extraStart = fl.size();
+    for (int i = extraStart; i < tl.size(); i++) {
+        // 拿到第 i 个形参
+        int defIdx = i - fl.size();
+        auto fpair = fd.begin() + defIdx;
+
+        assigned.insert(fpair.key());
+        newEnvir->assign(fpair.key()->toString(), tl[i]);
+    }
+
     // key assign
-    auto& fd = ((PDict*)(this->dictParams.get()))->getTrueValue();
-    auto& td = dictObj->getTrueValue();
     // 对传入的关键字赋值
     for (int i = 0; i < td.size(); i++) {
         auto tpair = td.begin() + i;

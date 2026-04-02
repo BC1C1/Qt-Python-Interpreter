@@ -22,8 +22,16 @@ struct CallFrame{
     pointer returnValue;
     EPointer innerEnvir;
     QByteArray codes;
+    pointer selfInstance;
+    pointer funcBeloneClass;
 };
-CallFrame makeCallFrame(int fromWhere, EPointer newEnvir, const QByteArray &codes);
+CallFrame makeCallFrame(
+    int fromWhere, 
+    EPointer newEnvir, 
+    pointer selfInstance,
+    pointer funcBelongClass,
+    const QByteArray &codes
+);
 BlockFrame makeWhileLoopFrame(int beginPC, int endPC);
 BlockFrame makeForLoopFrame(int beginPC, int endPC);
 }

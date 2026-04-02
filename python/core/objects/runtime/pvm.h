@@ -50,6 +50,9 @@ enum class Code: char {
     LOOP_FOR_END,       // 只看当前块
     LOOP_WHILE_END,
 
+    // super
+    CREATE_SUPER,
+    SUPER_NEXT,
 
     // 函数
     CREATE_FUNCTION,
@@ -139,6 +142,8 @@ private:
     void pushFrame(const BlockFrame& blockFrame);
     BlockFrame topFrame();
     EPointer currEnvir();
+    pointer getCurrSelfInstance();
+    pointer getCurrFuncBelongClass();
 private:
     void throwErrMsg(const std::string& msg);
 private:
@@ -180,6 +185,9 @@ private:
     void break_execute(bool& isGo);
     void loop_for_end_execute();
     void loop_while_end_execute();
+
+    // -------------------------- super ------------------------
+    void create_super_execute();
 
     // -------------------------- 迭代器相关 --------------------------
     void create_iter_execute();

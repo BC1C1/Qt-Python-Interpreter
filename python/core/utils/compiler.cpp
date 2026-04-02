@@ -76,14 +76,16 @@ void Compiler::compileFunctions(APointer node)
         }
         // 2. 首先是一个PList不变
         for (const auto& pose : posparams) {
-            compileExpression(pose);
+            auto name = QString::fromStdString(((Parse::Variable*)(pose.get()))->name);
+            cache.push_back(Instruction{ Code::LOAD_STRING, name });
         }
         cache.push_back(Instruction{ Code::LOAD_INT, posparams.size() });
         cache.push_back(Instruction{ Code::LOAD_LIST });
         // 3. 字典
         for (const auto& keye : keyparams) {
             auto assign = (Parse::Assignment*)keye.get();
-            compileExpression(assign->left);
+            auto name = QString::fromStdString(((Parse::Variable*)(assign->left.get()))->name);
+            cache.push_back(Instruction{ Code::LOAD_STRING, name });
             compileExpression(assign->right);
         }
         cache.push_back(Instruction{Code::LOAD_INT, keyparams.size()});
@@ -92,7 +94,8 @@ void Compiler::compileFunctions(APointer node)
         Compiler compiler;
         compiler.setAst(block);
         compiler.compileAST();
-        auto code = compiler.cache;
+        auto& code = compiler.cache;
+        code.pop_back(); // 弹出halt
         code.push_back(Instruction{ Code::RETURN });
         auto codeByte = Instruction::toByteArray(code);
         // 5. 是函数内部代码吗
@@ -324,36 +327,39 @@ void Compiler::compileExpression(APointer node)
     case NodeType::Call: {
         auto callStmt = (Parse::Call*)node.get();
         auto& left = callStmt->caller;
+        if (left->getType() == NodeType::Variable) {
+            auto caller = (Parse::Variable*)(left.get());
+            if (caller->isSuper) {
+                for (auto const& p : callStmt->params)
+                    compileExpression(p);
+                cache.push_back(Instruction{ Code::LOAD_INT, callStmt->params.size() });
+                cache.push_back(Instruction{ Code::CREATE_SUPER });
+                break;
+            }
+        }
         // 1.
         if (left->getType() == NodeType::Attribute)
-            compileExpression(dynamicPointerCast<Parse::Attribute>(left)->caller);
+            compileExpression(((Parse::Attribute*)(left.get()))->caller);
         else
             cache.push_back(Instruction{ Code::LOAD_NONE });
         QVector<Parse::pointer> posParams;
         QVector<Parse::pointer> keyParams;
         bool isTransed = false;
         for (const auto& e : callStmt->params) {
-            switch (e->getType())
-            {
-            case NodeType::Variable: {
-                if (isTransed) 
-                    throw std::runtime_error(u8"关键字参数不能先于位置参数");
-                posParams.append(e);
-                break;
-            }
-            case NodeType::Assignment: {
+            if (e->getType() == NodeType::Assignment) {
                 if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable) {
                     throw std::runtime_error(u8"无效的参数");
                 }
                 isTransed = true;
                 keyParams.append(e);
-                break;
             }
-            default:
-                throw std::runtime_error(u8"无效的参数");
-                break;
+            else {
+                if (isTransed)
+                    throw std::runtime_error(u8"关键字参数不能先于位置参数");
+                posParams.append(e);
             }
         }
+
         // 2.
         for (const auto& pe : posParams) {
             compileExpression(pe);

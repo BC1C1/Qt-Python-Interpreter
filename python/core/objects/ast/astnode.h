@@ -89,8 +89,9 @@ public:
 class Variable : public ANode
 {
 public:
-    Variable(const std::string& name, int line = 0);
+    Variable(const std::string& name, bool isSuper, int line = 0);
     std::string name;
+    bool isSuper;
     virtual QJsonObject toJson() const override;
 };
 class Block : public ANode

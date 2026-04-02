@@ -72,8 +72,9 @@ QJsonObject Bool::toJson() const
     return ret;
 }
 
-Variable::Variable(const std::string& name, int line) : ANode(NodeType::Variable, line),
-    name(name)
+Variable::Variable(const std::string& name, bool isSuper, int line)
+    : ANode(NodeType::Variable, line),
+    name(name), isSuper(isSuper)
 {
 }
 
@@ -83,6 +84,7 @@ QJsonObject Variable::toJson() const
     ret["type"] = "Variable";
     ret["value"] = QString::fromStdString(this->name);
     ret["line"] = this->getLine();
+    ret["isSuper"] = isSuper ? "true" : "false";
     return ret;
 }
 
@@ -148,7 +150,8 @@ QJsonObject Unary::toJson() const
     return ret;
 }
 
-String::String(const std::string &value, int line) : ANode(NodeType::String, line), value(value)
+String::String(const std::string &value, int line) 
+    : ANode(NodeType::String, line), value(value)
 {
 }
 

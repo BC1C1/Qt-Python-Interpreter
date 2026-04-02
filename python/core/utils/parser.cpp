@@ -444,7 +444,12 @@ pointer Parser::parsePrimary()
     }
     case Lex::TokenType::IDENTIFIER: {
         current += 1;
-        ret = makeShared<Variable>(token.lexeme, getInstantLine());
+        ret = makeShared<Variable>(token.lexeme, false, getInstantLine());
+        break;
+    }
+    case Lex::TokenType::SUPER: {
+        current += 1;
+        ret = makeShared<Variable>("super", true, getInstantLine());
         break;
     }
     case Lex::TokenType::LPAREN: {

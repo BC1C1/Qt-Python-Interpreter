@@ -44,7 +44,7 @@ namespace Py {
 		const pointer& dictParams,
 		QSharedPointer<Environment> envir)
 	{
-		auto obj = makeShared<PInstance>(envir, this);
+		auto obj = makeShared<PInstance>(envir, sharedFromThis());
 		return obj;
 	}
 	void PClass::__setattribute__(const QString& attrName, const pointer& obj)
