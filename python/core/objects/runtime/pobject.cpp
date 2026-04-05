@@ -223,9 +223,9 @@ void PObject::__setattribute__(const QString &, const PObject::pointer &)
     defaultNoSetAttributeError();
 }
 
-QVector<PClass*> PObject::__mro__()
+QVector<PObject::pointer> PObject::__mro__()
 {
-    return QVector<PClass*>();
+    return QVector<PObject::pointer>();
 }
 
 PObject::pointer PObject::noSuchCast(const std::string &name) const

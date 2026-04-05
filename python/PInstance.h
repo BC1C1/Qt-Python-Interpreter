@@ -17,6 +17,7 @@ namespace Py {
 		virtual void __setattribute__(const QString& attrName, const pointer& obj) override;
 		virtual pointer __getattribute__(const QString& attrName) override;
 		pointer __cls__() const;
+		virtual QVector<pointer> __mro__() override;
 
 		virtual pointer __eq__(const pointer& other) const override;
 		virtual pointer __ne__(const pointer& other) const override;

@@ -14,6 +14,7 @@ namespace Py {
 			MemberMap functions, 
 			MemberMap staticMembers, 
 			const QVector<pointer>& parents = QVector<pointer>());
+		virtual void init() override;
 		virtual QString toString() const override;
 		QVariant getValue() const override;
 
@@ -28,20 +29,20 @@ namespace Py {
 			const pointer& dictParams,
 			QSharedPointer<Environment> envir
 		) override;
-		virtual QVector<PClass*> __mro__() override;
+		virtual QVector<pointer> __mro__() override;
 		MemberMap& getFunctions();
 		MemberMap& getStaticMembers();
 		pointer onlygeattributehere(const QString& attrName);
 	private:
-		bool neverInTail(PClass* c, QVector<PClass*>& l);
-		QVector<PClass*> mro(PClass* cls);
+		bool neverInTail(pointer c, QVector<pointer>& l);
+		QVector<pointer> mro(pointer cls);
 	private:
 		QString className;
 		QHash<QString, pointer> functions;
 		QHash<QString, pointer> staticMembers;
 		QVector<pointer> parents;
-		QVector<PClass*>* mroList = nullptr;
-		QVector<PClass*> mrolist;
+		QVector<pointer>* mroList = nullptr;
+		QVector<pointer> mrolist;
 	public:
 		static PClass* object;
 	};

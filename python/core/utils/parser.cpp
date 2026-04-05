@@ -101,6 +101,8 @@ pointer Parser::parseStatement()
     if (continueStmt) return continueStmt;
     auto returnStmt = parseReturn();
     if (returnStmt) return returnStmt;
+    auto importStmt = parseImport();
+    if (importStmt) return importStmt;
     return parseExpression();
 }
 
@@ -312,6 +314,14 @@ pointer Parser::parseClass()
         }
     }
     return makeShared<Class>(functions, className, assignments, std::move(parents), line);
+}
+
+pointer Parser::parseImport()
+{
+    if (!match(TokenType::IMPORT)) return nullptr;
+    auto route = makeShared<String>(getTokens()[current].lexeme);
+    current++;
+    return makeShared<Import>(route, getInstantLine());
 }
 
 pointer Parser::parseExpression()

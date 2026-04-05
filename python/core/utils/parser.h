@@ -38,6 +38,8 @@ private:
     pointer parseReturn();
 
     pointer parseClass();
+
+    pointer parseImport();
 private:
     pointer parseExpression();
     pointer parseOr();

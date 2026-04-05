@@ -438,4 +438,18 @@ QJsonObject Dict::toJson() const
     return ret;
 }
 
+Import::Import(pointer route, int line)
+    : ANode(NodeType::Import, line), route(route)
+{
+}
+
+QJsonObject Import::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "import";
+    ret["route"] = route->toJson();
+    ret["line"] = getLine();
+    return ret;
+}
+
 }

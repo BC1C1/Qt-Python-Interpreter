@@ -17,7 +17,7 @@ using runtime_error = std::runtime_error;
 
 enum class Type {
     Int, Float, Str, Bool, None, Undefined, Iterator, List, FunctionDefine,
-    ReturnValue, Class, Instance, Dict, Super
+    ReturnValue, Class, Instance, Dict, Super, Model,
 };
 QString TypeToString(Type type);
 struct PyType {
@@ -40,6 +40,7 @@ class PClass;
 class PInstance;
 class PDict;
 class PSuper;
+class PModel;
 class PObject : public QObject, public QEnableSharedFromThis<PObject>
 {
     Q_OBJECT
@@ -51,6 +52,7 @@ public:
     virtual ~PObject();
     virtual QString toString() const = 0;
     virtual QVariant getValue() const;
+    virtual void init() {}
 
     // 类型转换声明
     virtual pointer asInt() const;
@@ -104,7 +106,7 @@ public:
     virtual void __setattribute__(const QString& attributeName, const pointer& obj);
 
     // mro获取
-    virtual QVector<PClass*> __mro__();
+    virtual QVector<PObject::pointer> __mro__();
 protected:
     // 错误处理函数声明
     pointer noSuchCast(const std::string& name) const;
@@ -147,6 +149,7 @@ static const std::map<Type, PyType> typeMap = {
     {Type::Instance, PyType{Type::Instance}},
     {Type::Dict, PyType{Type::Dict}},
     {Type::Super, PyType{Type::Super}},
+    {Type::Model, PyType{Type::Model}},
 };
 class PInt;
 class PFloat;
@@ -161,6 +164,7 @@ class PClass;
 class PInstance;
 class PDict;
 class PSuper;
+class PModel;
 }
 
 

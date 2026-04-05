@@ -81,6 +81,9 @@ enum class Code: char {
 
     POP,
 
+    // import
+    IMPORT,
+
     // 打印测试
     PRINT,
 
@@ -126,6 +129,7 @@ class PVM : public QObject
     Q_OBJECT
 public:
     PVM(const QVector<Instruction>& codes, QObject *parent = nullptr);
+    void setProjectDir(QString projectDir);
     void start();
     void stop();
     void run();
@@ -145,6 +149,8 @@ private:
     pointer getCurrSelfInstance();
     pointer getCurrFuncBelongClass();
 private:
+    void listDirectoryContents(const QString& path);
+private:
     void throwErrMsg(const std::string& msg);
 private:
     QVector<Instruction> currCodes;
@@ -153,12 +159,18 @@ private:
     ValueStack valueStack;
     ValueStack funcStack;
     PClass* object = nullptr;
+    QString projectDir;
 private:
     void initRootObject();
 //    EPointer currEnvir;
 //    EPointer defaultEnvir;
     BlockFrameStack blockFrameStack;
     CallFrameStack callFrameStack;
+private:
+    void registerGlobalFunctions();
+
+    void registerLen();
+
 private:
     // -------------------------- LOAD 系列 --------------------------
     void load_list_execute();
@@ -188,6 +200,9 @@ private:
 
     // -------------------------- super ------------------------
     void create_super_execute();
+
+    // -------------------------- import ------------------------
+    void import_execute();
 
     // -------------------------- 迭代器相关 --------------------------
     void create_iter_execute();

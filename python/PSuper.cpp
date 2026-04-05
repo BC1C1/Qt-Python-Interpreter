@@ -1,5 +1,6 @@
 #include "PSuper.h"
 
+#include <qdebug.h>
 #include "PClass.h"
 #include "PDict.h"
 #include "PInstance.h"
@@ -18,11 +19,15 @@ namespace Py {
 	}
 	pointer PSuper::getNextClass()
 	{
-		QVector<PClass*> mro = instance->__mro__();
-		auto currclass = (PClass*)(currClass.get());
-		auto index = mro.indexOf(currclass);
+		//qDebug() << currClass->toString() << "I'm currClass!";
+		QVector<pointer> mro = instance->__mro__();
+		auto index = mro.indexOf(currClass);
 		if (mro[index + 1] != PClass::object) {
-			return mro[index + 1]->__getattribute__("__init__");
+			//qDebug() << mro[index + 1]->toString();
+			//for (int curr = index; curr < mro.size(); curr++) {
+			//	qDebug() << mro[curr]->toString();
+			//}
+			return mro[index + 1];
 		}
 		return nullptr;
 	}
@@ -56,6 +61,7 @@ namespace Py {
 	}
 	pointer PSuper::__getattribute__(const QString& attrName)
 	{
-		return pointer();
+		auto cls = getNextClass();
+		return cls->__getattribute__(attrName);
 	}
 }

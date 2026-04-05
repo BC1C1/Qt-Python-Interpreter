@@ -612,6 +612,11 @@ void Compiler::compileStatement(APointer node)
     //    cache.push_back(Instruction{ Code::CALL });
     //    break;
     //}
+    case NodeType::Import: {
+        auto importStmt = (Parse::Import*)(node.get());
+        compileExpression(importStmt->route);
+        cache.push_back(Instruction{ Code::IMPORT});
+    }
     case NodeType::Class: {
         break;
     }

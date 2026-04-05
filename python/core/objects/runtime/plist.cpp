@@ -4,12 +4,27 @@
 #include "core/objects/runtime/pint.h"
 #include "core/objects/runtime/pbool.h"
 #include "core/objects/runtime/piterator.h"
+#include "core/objects/runtime/pfunction.h"
+#include "core/utils/functions.h"
+#include "core/objects/runtime/pnone.h"
+#include "PDict.h"
 
 namespace Py {
-
-PList::PList(const QVector<PObject::pointer> &value) : PObject(typeMap.at(Type::List)), value(value)
+    using BuiltinFuncPtr =
+        pointer(*)(
+            const pointer& self,
+            const pointer& args,
+            QSharedPointer<Environment> env
+            );
+    using EPointer = QSharedPointer<Environment>;
+QHash<QString, pointer> PList::functions = QHash<QString, pointer>();
+PList::PList(
+    const QVector<PObject::pointer> &value,
+    bool isSkipRegister
+) : PObject(typeMap.at(Type::List)), value(value)
 {
-
+    if (!isSkipRegister)
+        registerInnerFunc();
 }
 
 QString PList::toString() const
@@ -248,6 +263,50 @@ PObject::pointer PList::__getitem__(const PObject::pointer &index)
         throwOutOfRange();
     }
     return this->value[idx];
+}
+
+pointer PList::__getattribute__(const QString& attrName)
+{
+    auto iter = functions.find(attrName);
+    if (iter != functions.end()) {
+        return iter.value();
+    }
+    return makeShared<PNone>();
+}
+
+void PList::__setattribute__(const QString& attrName, const pointer& attr)
+{
+    functions[attrName] = attr;
+}
+
+void PList::registerInnerFunc()
+{
+    registerAppend();
+}
+
+void PList::registerAppend()
+{
+    auto listObj = makeShared<PList>(QVector<pointer>{makeShared<PStr>("new_element")}, true);
+    auto func = makeShared<PFunction>(
+        listObj,                    // 位置参数形参
+        makeShared<PDict>(),        // 空字典
+        QByteArray(),               // 空字节码（不会调用）
+        makeShared<PStr>("append"), // 函数名
+        false,                      // 不是类方法
+        true                        // 是内置方法
+    );
+    this->functions["append"] = func;
+    // 制造一个函数
+    BuiltinFuncPtr appendFuncPtr = [](const pointer& self, const pointer& arg, EPointer env)->pointer {
+        auto newElement = env->getObj("new_element");
+        // 不用检查因为前面调用__call__检查过了，如果这个对象不存在那前面都错了，为了效率不层层检查，
+        // 而且把错误只放到一层是合适的，尤其是未来对于这里的记忆模糊时
+        auto listself = (PList*)(self.get());
+        listself->getTrueValue().append(newElement);
+        return makeShared<PNone>();
+        };
+    func->setBuildinFunc(appendFuncPtr);
+    return;
 }
 
 void PList::throwInvalidTypeForIndex()

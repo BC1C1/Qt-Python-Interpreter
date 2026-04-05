@@ -17,6 +17,9 @@ namespace Py {
 		: PObject(typeMap.at(Type::Class)),
 		className(className), functions(functions), staticMembers(staticMembers), parents(parents)
 	{
+	}
+	void PClass::init()
+	{
 		auto initFunc = __getattribute__("__init__");
 		if (initFunc == nullptr) {
 			auto self = makeShared<PStr>("self");
@@ -29,7 +32,6 @@ namespace Py {
 			auto functionObj = makeShared<PFunction>(param, makeShared<PDict>(), vm::Instruction::toByteArray(temp), name);
 			this->functions["__init__"] = functionObj;
 		}
-
 	}
 	QString PClass::toString() const
 	{
@@ -65,12 +67,12 @@ namespace Py {
 	pointer PClass::__getattribute__(const QString& attrName)
 	{
 		if (!mroList) {
-			mrolist = mro(this);
+			mrolist = mro(sharedFromThis());
 			mroList = &mrolist;
 		}
 		auto& mrovec = *mroList;
 		for (const auto& c : mrovec) {
-			auto ret = c->onlygeattributehere(attrName);
+			auto ret = ((PClass*)(c.get()))->onlygeattributehere(attrName);
 			if (ret)
 				return ret;
 		}
@@ -83,7 +85,7 @@ namespace Py {
 	{
 		return __instance__(listParams, dictParams, envir);
 	}
-	QVector<PClass*> PClass::__mro__()
+	QVector<pointer> PClass::__mro__()
 	{
 		return *mroList;
 	}
@@ -107,7 +109,7 @@ namespace Py {
 		}
 		return nullptr;
 	}
-	bool PClass::neverInTail(PClass* c, QVector<PClass*>& l)
+	bool PClass::neverInTail(pointer c, QVector<pointer>& l)
 	{
 		if (l.size() <= 1)
 			return true;
@@ -120,25 +122,27 @@ namespace Py {
 		}
 		return true;
 	}
-	QVector<PClass*> PClass::mro(PClass* cls)
+	QVector<pointer> PClass::mro(pointer cls)
 	{
-		if (cls->parents.isEmpty()) {
+		if (cls->getType().type != Type::Class)
+			throw std::runtime_error("mro遇到意外的参数");
+		const auto const classobj = (PClass*)(cls.get());
+		if (classobj->parents.isEmpty()) {
 			return { cls };
 		}
-		QVector<QVector<PClass*>> toMerge;
+		QVector<QVector<pointer>> toMerge;
 
-		for (auto& pObj : cls->parents) {
-			auto p = (PClass*)(pObj.get());
-			toMerge.append(mro(p));
+		for (auto& pObj : classobj->parents) {
+			toMerge.append(mro(pObj));
 		}
 
-		QVector<PClass*> directParents;
-		for (auto& pObj : cls->parents) {
-			directParents.append((PClass*)pObj.get());
+		QVector<pointer> directParents;
+		for (auto& pObj : classobj->parents) {
+			directParents.append(pObj);
 		}
 		toMerge.append(directParents);
 
-		QVector<PClass*> result;
+		QVector<pointer> result;
 		result.append(cls);
 
 		while (!toMerge.isEmpty())
@@ -153,9 +157,9 @@ namespace Py {
 
 			if (toMerge.isEmpty())
 				break;
-			PClass* head = nullptr;
+			pointer head = nullptr;
 			for (auto& list : toMerge) {
-				PClass* candidate = list.first();
+				pointer candidate = list.first();
 
 				bool ok = true;
 				for (auto& l : toMerge) {

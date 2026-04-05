@@ -34,6 +34,7 @@ enum class NodeType {
     Break,
     Continue,
     Dict,
+    Import
 };
 
 QString NodeTypeToQString(NodeType type);
@@ -239,6 +240,12 @@ class Dict : public ANode {
 public:
     Dict(QVector<QPair<pointer, pointer>>&& element, int line);
     QVector<QPair<pointer, pointer>> elements;
+    QJsonObject toJson() const override;
+};
+class Import : public ANode {
+public:
+    Import(pointer route, int line = 0);
+    pointer route;
     QJsonObject toJson() const override;
 };
 }

@@ -49,6 +49,10 @@ namespace Py {
 	{
 		return classObj;
 	}
+	QVector<pointer> PInstance::__mro__()
+	{
+		return classObj->__mro__();
+	}
 	pointer PInstance::__eq__(const pointer& other) const
 	{
 		auto type = other->getType().type;

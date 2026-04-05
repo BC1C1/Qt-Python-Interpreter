@@ -1,12 +1,30 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 #include <QSharedPointer>
+#include <type_traits>
+#include "core/objects/runtime/pobject.h"
 
+using PObject = Py::PObject;
 // utils begin
+template <typename T>
+constexpr bool is_pobject_v = std::is_base_of_v<PObject, T>;
 template <typename T, typename... Args>
-QSharedPointer<T> makeShared(Args&&... args) {
+std::enable_if_t<is_pobject_v<T>, QSharedPointer<T>>
+makeShared(Args&&... args) {
+    auto obj = QSharedPointer<T>::create(std::forward<Args>(args)...);
+    obj->init();
+    return obj;
+}
+template <typename T, typename... Args>
+std::enable_if_t<!is_pobject_v<T>, QSharedPointer<T>>
+makeShared(Args&&... args) {
     return QSharedPointer<T>::create(std::forward<Args>(args)...);
 }
+
+//template <typename T, typename... Args>
+//QSharedPointer<T> makeShared(Args&&... args) {
+//    return QSharedPointer<T>::create(std::forward<Args>(args)...);
+//}
 //template <typename Base, typename Derived, typename... Args>
 //QSharedPointer<Base> makeShared(Args&&... args) {
 //    return QSharedPointer<Base>(new Derived(std::forward<Args>(args)...));
@@ -35,7 +53,7 @@ inline std::string qt2std(const QString& qStr)
 
 inline QString std2qt(const std::string& sStr)
 {
-    return QString::fromUtf8(sStr.data(), sStr.size());
+    return QString::fromUtf8(sStr.data(), static_cast<int>(sStr.size()));
 }
 // utils end
 

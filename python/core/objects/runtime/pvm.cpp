@@ -14,7 +14,22 @@
 #include "PClass.h"
 #include "PDict.h"
 #include "PSuper.h"
+#include "core/objects/ast/astnode.h"
+#include "core/utils/lexer.h"
+#include "core/utils/parser.h"
+#include "core/utils/compiler.h"
+#include <qjsonobject.h>
+#include "qjsondocument.h"
+#include "PModel.h"
+#include <qdir.h>
 namespace vm {
+    using BuiltinFuncPtr =
+        pointer(*)(
+            const pointer& self,
+            const pointer& args,
+            QSharedPointer<Environment> env
+            );
+    using EPointer = QSharedPointer<Environment>;
 PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), PC(0), isRunning(false)
 {
     auto defaultEnvir = makeShared<Environment>(nullptr, this);
@@ -22,6 +37,12 @@ PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), 
     currCodes = codes;
     initRootObject();
     PClass::object = object;
+    registerGlobalFunctions();
+}
+
+void PVM::setProjectDir(QString projectDir)
+{
+    this->projectDir = projectDir;
 }
 
 void PVM::start()
@@ -77,7 +98,7 @@ void PVM::executeSingleCode()
     case Code::CALL:                call_execute(isGo);                 break;
     case Code::RETURN:              return_execute(isGo);               break;
     case Code::CREATE_CLASS:        create_class_execute(operand);      break;
-
+    case Code::IMPORT:              import_execute();                   break;
     case Code::CREATE_SUPER:        create_super_execute();             break;
 
     case Code::ADD:                 add_execute(isGo);                  break;
@@ -209,6 +230,22 @@ pointer PVM::getCurrFuncBelongClass()
     return callFrameStack.top().funcBeloneClass;
 }
 
+void PVM::listDirectoryContents(const QString& path)
+{
+    QDir dir(path);
+
+    if (!dir.exists()) {
+        qDebug() << "目录不存在:" << path;
+        return;
+    }
+
+    QStringList allEntries = dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+
+    QStringList files = dir.entryList(QDir::Files);
+    QStringList dirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    
+}
+
 void PVM::halt_execute()
 {
     qDebug() << "收到HALT停机指令";
@@ -222,6 +259,51 @@ inline void PVM::initRootObject() {
         QHash<QString, pointer>(),
         QVector<pointer>()       
     );
+}
+
+void PVM::registerGlobalFunctions()
+{
+    registerLen();
+}
+
+void PVM::registerLen()
+{
+    auto param = makeShared<PList>(QVector<pointer>{makeShared<PStr>("object")}, true);
+    auto func = makeShared<PFunction>(
+        param,
+        makeShared<PDict>(),
+        QByteArray(),
+        makeShared<PStr>("len"),
+        false,
+        true
+    );
+    currEnvir()->assign("len", func);
+    BuiltinFuncPtr ptr = [](const pointer& self, const pointer& args, EPointer env)->pointer {
+        auto obj = env->getObj("object");
+        switch (obj->getType().type)
+        {
+        case Type::List: {
+            auto size = ((PList*)(obj.get()))->getTrueValue().size();
+            return makeShared<PInt>(size);
+        }
+        case Type::Dict: {
+            auto size = ((PDict*)(obj.get()))->getTrueValue().size();
+            return makeShared<PInt>(size);
+        }
+        case Type::Str: {
+            auto size = obj->getValue().toString().size();
+            return makeShared<PInt>(size);
+        }
+        default: {
+            QString errMsg = QString(" TypeError: object of type %1 has no len() ")
+                .arg(TypeToString(obj->getType().type));
+            throw std::runtime_error(qt2std(errMsg)); // 一个转换函数
+            break;
+        }
+        }
+        };
+    func->setBuildinFunc(ptr);
+    return;
 }
 
 void PVM::load_list_execute()
@@ -341,7 +423,7 @@ void PVM::load_attr_execute(QVariant operand, bool& isGo)
 {
     auto toAttr = popValue();
     auto attrName = operand.toString();
-    qDebug() << "value of toAttr is: " << toAttr->toString();
+    //qDebug() << "value of toAttr is: " << toAttr->toString();
     if (toAttr->getType().type == Type::Instance) {
         auto result = toAttr->__getattribute__(attrName);
         if (result) {
@@ -499,8 +581,82 @@ void PVM::create_super_execute()
         throwErrMsg("super() 调用位置错误，无法获取当前所属类");
     }
 
-    auto superObj = makeShared<PSuper>(instance, classObj);
+    auto superObj = makeShared<PSuper>(classObj, instance);
     pushValue(superObj);
+}
+
+void PVM::import_execute()
+{
+    bool istest = false;
+    auto route = popValue();
+    // 拼装路径
+    
+    QFile file(route->toString());
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        throw std::runtime_error("无效的路径，import失败");
+    }
+    auto code1 = file.readAll().toStdString();
+    file.close();
+    // 0. 原始文本
+    if (istest) {
+        qDebug() << "<---------- text ---------->";
+        qDebug() << QString::fromStdString(code1);
+        qDebug() << "<---------- text end ---------->";
+    }
+    // 1. 分词
+    Lex::Lexer lexer;
+    std::vector<Lex::Token> tokens = lexer.scanTokens(code1);
+    if (istest) {
+        qDebug() << "<---------- tokens ---------->";
+        for (const Lex::Token& token : tokens) {
+            qDebug() << token.TokenToQString(token) << Qt::endl;
+        }
+    }
+    // 2. 解析
+    Parse::Parser parser;
+    QSharedPointer<Parse::ANode> ast = parser.parse(tokens);
+    if (!ast) {
+        qDebug() << "解析失败：AST 为空";
+    }
+    if (istest) {
+        auto jsonObj = ast->toJson();
+        QJsonDocument doc(jsonObj);
+        QString prettyStr = QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
+
+        QStringList lines = prettyStr.split("\n");
+        for (const QString& line : lines) {
+            qDebug().noquote() << line;
+        }
+        qDebug() << "\n<---------- parse success ---------->";
+    }
+    // 3. 编译
+    Compile::Compiler compiler;
+    compiler.setAst(ast);
+
+    auto instrucntions = compiler.compileAST();
+    if (istest) {
+        int cnt = 0;
+        for (const auto& ins : instrucntions) {
+            qDebug() << "Line: " << cnt << ins.toString();
+            cnt++;
+        }
+
+        qDebug() << "\n<---------- compile success ---------->";
+    }
+
+    // 4. 运行
+    PVM pythonVirtualMachine(instrucntions);
+    pythonVirtualMachine.start();
+    if (istest) {
+        qDebug() << "\n<---------- running success ---------->";
+    }
+    auto importenvir = pythonVirtualMachine.currEnvir();
+    auto modelObj = makeShared<PModel>(importenvir);
+    auto partlist = route->toString().split('\\');
+    auto& name = *partlist.rbegin();
+    name = name.split('.')[0];
+    currEnvir()->assign(name, modelObj); // 甚至支持仅在当前环境import，暂时拿路径当名字
+    return;
 }
 
 void PVM::create_function_execute(QVariant operand)
@@ -532,6 +688,15 @@ void PVM::call_execute(bool& isGo)
     pointer listObj = popValue();
     auto funcCaller = popValue();
     auto newEnvir = createNewEnvironment(currEnvir());
+    if (caller->getType() == Type::FunctionDefine) {
+        auto obj = (PFunction*)(caller.get());
+        if (obj->getIsBuildInFunction()) {
+            auto cfunc = obj->getBuiltinFunc();
+            caller->__call__(listObj, dictObj, newEnvir); // 新环境（临时，currEnvir()得到的还是当前环境）
+            pushValue(cfunc(funcCaller, listObj, newEnvir));  // 防止污染当前环境
+            return; 
+        }
+    }// 下面是非内置函数逻辑
     if (funcCaller->getType().type == Type::Instance)
     {
         auto listobj = (PList*)(listObj.get());
@@ -1010,6 +1175,11 @@ QString CodeToQString(Code code)
         // 类定义
     case Code::CREATE_CLASS:    return "CREATE_CLASS";
     case Code::STORE_CLASS_VAR: return "STORE_CLASS_VAR";
+        // super
+    case Code::SUPER_NEXT:      return "SUPER_NEXT";
+    case Code::CREATE_SUPER:    return "CREATE_SUPER";
+        // import
+    case Code::IMPORT:          return "IMPORT";
 
         // 算数
     case Code::ADD:             return "ADD";

@@ -2,14 +2,15 @@
 #define PLIST_H
 
 #include "core/objects/runtime/pobject.h"
-#include "core/utils/functions.h"
+
 #include <QVector>
+#include <QHash>
 
 namespace Py {
 class PList : public PObject
 {
 public:
-    PList(const QVector<pointer>& list);
+    PList(const QVector<pointer>& list, bool isSkipRegister = false);
     QString toString() const override;
     QVariant getValue() const override;
     QVector<pointer>& getTrueValue();
@@ -39,12 +40,22 @@ public:
     virtual void __setitem__(const pointer& index, pointer obj) override;
     virtual pointer __getitem__(const pointer& index) override;
 
+    virtual pointer __getattribute__(const QString& attrName) override;
+    virtual void __setattribute__(const QString& attrName, const pointer& attr) override;
+
+private:
+    void registerInnerFunc();
+
+private:
+    void registerAppend();
+
 protected:
     void throwInvalidTypeForIndex();
     void throwOutOfRange();
 
 private:
     QVector<pointer> value;
+    static QHash<QString, pointer> functions;
 };
 }
 

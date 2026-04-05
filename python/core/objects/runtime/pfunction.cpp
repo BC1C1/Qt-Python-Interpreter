@@ -9,9 +9,21 @@
 
 namespace Py {
 
-PFunction::PFunction(pointer listObj, pointer dictObj, const QByteArray &code, PObject::pointer name, bool isClassFunction)
+PFunction::PFunction(
+    pointer listObj, 
+    pointer dictObj, 
+    const QByteArray &code, 
+    PObject::pointer name, 
+    bool isClassFunction,
+    bool isBuildinFunction)
 : PObject(typeMap.at(Type::FunctionDefine)),
-  name(name), listParams(listObj), dictParams(dictObj), code(code), isClassFunction(isClassFunction)
+  name(name), 
+    listParams(listObj), 
+    dictParams(dictObj),
+    code(code), 
+    isClassFunction(isClassFunction),
+    isBuildinFunction(isBuildinFunction),
+    cFunc(nullptr)
 {
 
 }
@@ -44,6 +56,21 @@ PDict* PFunction::getDictParamsObj() const
 bool PFunction::getIsClassFunction() const
 {
     return this->isClassFunction;
+}
+
+bool PFunction::getIsBuildInFunction() const
+{
+    return isBuildinFunction;
+}
+
+BuiltinFuncPtr PFunction::getBuiltinFunc() const
+{
+    return cFunc;
+}
+
+void PFunction::setBuildinFunc(BuiltinFuncPtr ptr)
+{
+    cFunc = ptr;
 }
 
 Py::PObject::pointer PFunction::__call__(const pointer& listParams, 
