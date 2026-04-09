@@ -3,6 +3,7 @@
 #include <QSharedPointer>
 #include <type_traits>
 #include "core/objects/runtime/pobject.h"
+#include <qdir.h>
 
 using PObject = Py::PObject;
 // utils begin
@@ -54,6 +55,43 @@ inline std::string qt2std(const QString& qStr)
 inline QString std2qt(const std::string& sStr)
 {
     return QString::fromUtf8(sStr.data(), static_cast<int>(sStr.size()));
+}
+static QString findFile(const QString& searchPath, const QString& baseName, const QString& suffix)
+{
+    QDir directory(searchPath);
+
+    if (!directory.exists()) {
+        return QString();
+    }
+
+    QString fileName = baseName + suffix;
+    QString fullPath = directory.absoluteFilePath(fileName);
+
+    QFileInfo info(fullPath);
+    if (info.exists() && info.isFile()) {
+        return fullPath;
+    }
+
+    return QString();
+}
+static QStringList getAllFilesAbsolutePath(const QString& directoryPath)
+{
+    QDir directory(directoryPath);
+
+    if (!directory.exists()) {
+        return QStringList();
+    }
+
+    directory.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+
+    QStringList absolutePaths;
+    QStringList fileNames = directory.entryList();
+
+    for (const QString& fileName : fileNames) {
+        absolutePaths.append(directory.absoluteFilePath(fileName));
+    }
+
+    return absolutePaths;
 }
 // utils end
 

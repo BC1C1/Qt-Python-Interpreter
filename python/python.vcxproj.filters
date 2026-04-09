@@ -117,8 +117,11 @@
     <ClCompile Include="PModel.cpp">
       <Filter>源文件\core\objects\runtime</Filter>
     </ClCompile>
+    <ClCompile Include="Project.cpp">
+      <Filter>源文件\core\utils</Filter>
+    </ClCompile>
     <ClCompile Include="Core.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -166,9 +169,6 @@
     <QtMoc Include="PSuper.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
-    <QtMoc Include="core\utils\functions.h">
-      <Filter>头文件\core\utils</Filter>
-    </QtMoc>
     <QtMoc Include="core\objects\runtime\piterator.h">
       <Filter>头文件\core\objects\runtime</Filter>
     </QtMoc>
@@ -200,6 +200,12 @@
     </ClInclude>
     <ClInclude Include="PModel.h">
       <Filter>头文件\core\objects\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="Project.h">
+      <Filter>头文件\core\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\functions.h">
+      <Filter>头文件\core\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

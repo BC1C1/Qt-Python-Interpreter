@@ -86,6 +86,10 @@
     <Import Project="$(QtMsBuild)\Qt.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\qt5.14.2\5.14.2\msvc2015_64\include</IncludePath>
+    <LibraryPath>D:\qt5.14.2\5.14.2\msvc2015_64\include;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -171,12 +175,14 @@
     <ClCompile Include="PDict.cpp" />
     <ClCompile Include="PInstance.cpp" />
     <ClCompile Include="PModel.cpp" />
+    <ClCompile Include="Project.cpp" />
     <ClCompile Include="PSuper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="..\..\..\qt\python\mainwindow.ui" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Project.h" />
     <QtMoc Include="Core.h" />
     <ClInclude Include="core\objects\ast\astnode.h" />
     <ClInclude Include="PModel.h" />
@@ -191,7 +197,7 @@
     <ClInclude Include="core\objects\runtime\plist.h" />
     <QtMoc Include="core\objects\runtime\pnone.h" />
     <QtMoc Include="core\objects\runtime\pstr.h" />
-    <QtMoc Include="core\utils\functions.h" />
+    <ClInclude Include="core\utils\functions.h" />
     <QtMoc Include="core\utils\parser.h" />
     <QtMoc Include="core\utils\lexer.h" />
     <QtMoc Include="core\utils\compiler.h" />

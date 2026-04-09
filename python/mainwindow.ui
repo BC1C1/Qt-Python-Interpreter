@@ -6,16 +6,67 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>668</width>
+    <height>504</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
-  <widget class="QMenuBar" name="menubar"/>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QTextEdit" name="codeEditor"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>668</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>文件</string>
+    </property>
+    <addaction name="actionnew_file"/>
+    <addaction name="actionnew_project"/>
+    <addaction name="actionopen"/>
+   </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>调试</string>
+    </property>
+    <addaction name="actionrun"/>
+   </widget>
+   <addaction name="menu"/>
+   <addaction name="menu_2"/>
+  </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionnew_file">
+   <property name="text">
+    <string>new file</string>
+   </property>
+  </action>
+  <action name="actionnew_project">
+   <property name="text">
+    <string>new project</string>
+   </property>
+  </action>
+  <action name="actionrun">
+   <property name="text">
+    <string>run</string>
+   </property>
+  </action>
+  <action name="actionopen">
+   <property name="text">
+    <string>open</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

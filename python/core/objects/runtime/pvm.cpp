@@ -22,7 +22,10 @@
 #include "qjsondocument.h"
 #include "PModel.h"
 #include <qdir.h>
+#include "Core.h"
+#include "Project.h"
 namespace vm {
+    using Environment = Py::Environment;
     using BuiltinFuncPtr =
         pointer(*)(
             const pointer& self,
@@ -30,14 +33,15 @@ namespace vm {
             QSharedPointer<Environment> env
             );
     using EPointer = QSharedPointer<Environment>;
-PVM::PVM(const QVector<Instruction> &codes, QObject *parent) : QObject(parent), PC(0), isRunning(false)
+PVM::PVM(QObject *parent) : QObject(parent), PC(0), isRunning(false)
 {
-    auto defaultEnvir = makeShared<Environment>(nullptr, this);
-    callFrameStack.push(makeCallFrame(0, defaultEnvir, nullptr, nullptr, Instruction::toByteArray(codes)));
-    currCodes = codes;
     initRootObject();
     PClass::object = object;
-    registerGlobalFunctions();
+}
+
+void PVM::setImportSrcPath(const QString& path)
+{
+    this->importSrcPath = path;
 }
 
 void PVM::setProjectDir(QString projectDir)
@@ -45,8 +49,15 @@ void PVM::setProjectDir(QString projectDir)
     this->projectDir = projectDir;
 }
 
-void PVM::start()
+void PVM::setCode(const QVector<Instruction>& codes)
 {
+    currCodes = codes;
+}
+
+void PVM::start() // 主要运行函数
+{
+    resetAll();
+    initAll();
     isRunning = true;
     run();
 }
@@ -54,6 +65,24 @@ void PVM::start()
 void PVM::stop()
 {
     isRunning = false;
+}
+
+void PVM::resetAll()
+{
+    currCodes.clear();
+    PC = 0;
+    // isRunning = false; // 立刻要被置为true
+    valueStack.clear();
+    funcStack.clear();
+    blockFrameStack.clear();
+    callFrameStack.clear();
+}
+
+void PVM::initAll()
+{
+    auto defaultEnvir = makeShared<Environment>(nullptr, this);
+    callFrameStack.push(makeCallFrame(0, defaultEnvir, nullptr, nullptr, Instruction::toByteArray(currCodes)));
+    registerGlobalFunctions();
 }
 
 void PVM::executeSingleCode()
@@ -230,20 +259,24 @@ pointer PVM::getCurrFuncBelongClass()
     return callFrameStack.top().funcBeloneClass;
 }
 
-void PVM::listDirectoryContents(const QString& path)
+QStringList PVM::listDirectoryContents(const QString& path)
 {
     QDir dir(path);
 
     if (!dir.exists()) {
         qDebug() << "目录不存在:" << path;
-        return;
+        return QStringList();
     }
 
-    QStringList allEntries = dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    // 获取所有文件及其完整路径
+    QStringList fileNames = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+    QStringList fullPaths;
 
-    QStringList files = dir.entryList(QDir::Files);
-    QStringList dirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    
+    for (const QString& fileName : fileNames) {
+        QString fullPath = dir.absoluteFilePath(fileName);
+        fullPaths.append(fullPath);
+    }
+    return fullPaths;
 }
 
 void PVM::halt_execute()
@@ -588,74 +621,35 @@ void PVM::create_super_execute()
 void PVM::import_execute()
 {
     bool istest = false;
-    auto route = popValue();
-    // 拼装路径
-    
-    QFile file(route->toString());
+    auto importName = popValue()->getValue().toString();
+    QString route;
+    route = findFile(importSrcPath, importName, ".py");
+    if (route.isEmpty()) {
+        throwErrMsg(QString("找不到: %1").arg(importName).toStdString());
+    }
+    auto upperPath = Project::getUpper(route);
+    //QString initFile = findFile(upperPath, "__init__", ".py");
+    //if (initFile.isEmpty())
+    //    throwErrMsg(QString("不可导入的包: %1, 路径: %2").arg(importName).arg(route).toStdString());
+    auto rootPath = Project::findProjectRoot(route);
+    auto srcPath = Project::getSrcPath(rootPath);
+    QFile file(route);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         throw std::runtime_error("无效的路径，import失败");
     }
-    auto code1 = file.readAll().toStdString();
+    auto codes = file.readAll().toStdString();
     file.close();
-    // 0. 原始文本
-    if (istest) {
-        qDebug() << "<---------- text ---------->";
-        qDebug() << QString::fromStdString(code1);
-        qDebug() << "<---------- text end ---------->";
-    }
-    // 1. 分词
-    Lex::Lexer lexer;
-    std::vector<Lex::Token> tokens = lexer.scanTokens(code1);
-    if (istest) {
-        qDebug() << "<---------- tokens ---------->";
-        for (const Lex::Token& token : tokens) {
-            qDebug() << token.TokenToQString(token) << Qt::endl;
-        }
-    }
-    // 2. 解析
-    Parse::Parser parser;
-    QSharedPointer<Parse::ANode> ast = parser.parse(tokens);
-    if (!ast) {
-        qDebug() << "解析失败：AST 为空";
-    }
-    if (istest) {
-        auto jsonObj = ast->toJson();
-        QJsonDocument doc(jsonObj);
-        QString prettyStr = QString::fromUtf8(doc.toJson(QJsonDocument::Indented));
-
-        QStringList lines = prettyStr.split("\n");
-        for (const QString& line : lines) {
-            qDebug().noquote() << line;
-        }
-        qDebug() << "\n<---------- parse success ---------->";
-    }
-    // 3. 编译
-    Compile::Compiler compiler;
-    compiler.setAst(ast);
-
-    auto instrucntions = compiler.compileAST();
-    if (istest) {
-        int cnt = 0;
-        for (const auto& ins : instrucntions) {
-            qDebug() << "Line: " << cnt << ins.toString();
-            cnt++;
-        }
-
-        qDebug() << "\n<---------- compile success ---------->";
-    }
-
-    // 4. 运行
-    PVM pythonVirtualMachine(instrucntions);
-    pythonVirtualMachine.start();
-    if (istest) {
-        qDebug() << "\n<---------- running success ---------->";
-    }
-    auto importenvir = pythonVirtualMachine.currEnvir();
+    Pro p{
+        rootPath,
+        route,
+        srcPath
+    };
+    Core* core = new Core();
+    core->execute(p);
+    auto importenvir = core->getResultEnvir();
     auto modelObj = makeShared<PModel>(importenvir);
-    auto partlist = route->toString().split('\\');
-    auto& name = *partlist.rbegin();
-    name = name.split('.')[0];
-    currEnvir()->assign(name, modelObj); // 甚至支持仅在当前环境import，暂时拿路径当名字
+    currEnvir()->assign(importName, modelObj); 
+    delete core;
     return;
 }
 

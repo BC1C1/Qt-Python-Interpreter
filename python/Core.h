@@ -4,25 +4,30 @@
 #include "core/utils/parser.h"
 #include "core/utils/compiler.h"
 #include "core/objects/runtime/pvm.h"
+#include "core/utils/functions.h"
 #include "qobject.h"
+#include "Project.h"
 
 using Lex::Lexer;
 using Lex::Token;
 using Parse::Parser;
 using Compile::Compiler;
 using vm::PVM;
+using Py::Environment;
 
 class Core : public QObject
 {
 	Q_OBJECT
+private:
+	using EPointer = QSharedPointer<Environment>;
 public:
-	Core(QString pyfilepath, QString projectDir = QString(), QObject* parent = nullptr);
-	void execute();
+	Core(QObject* parent = nullptr);
+	void execute(const Pro& project);
+	void execute(QString srcFilePath);
+	EPointer getResultEnvir();
 	~Core();
 
 private:
-	QString pyfilepath;
-	QString projectDir;
 	Lexer* lexer;
 	Parser* parser;
 	Compiler* compiler;

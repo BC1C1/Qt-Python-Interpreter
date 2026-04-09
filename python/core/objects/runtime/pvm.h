@@ -128,13 +128,18 @@ class PVM : public QObject
 {
     Q_OBJECT
 public:
-    PVM(const QVector<Instruction>& codes, QObject *parent = nullptr);
+    PVM(QObject *parent = nullptr);
+    void setImportSrcPath(const QString& path);
     void setProjectDir(QString projectDir);
+    void setCode(const QVector<Instruction>& codes);
+    EPointer currEnvir();
     void start();
     void stop();
     void run();
     ~PVM();
 private:
+    void resetAll();
+    void initAll();
     void executeSingleCode();
     void pushValue(pointer object);
     pointer popValue();
@@ -145,11 +150,10 @@ private:
     BlockFrame popFrame();
     void pushFrame(const BlockFrame& blockFrame);
     BlockFrame topFrame();
-    EPointer currEnvir();
     pointer getCurrSelfInstance();
     pointer getCurrFuncBelongClass();
 private:
-    void listDirectoryContents(const QString& path);
+    QStringList listDirectoryContents(const QString& path);
 private:
     void throwErrMsg(const std::string& msg);
 private:
@@ -160,6 +164,7 @@ private:
     ValueStack funcStack;
     PClass* object = nullptr;
     QString projectDir;
+    QString importSrcPath;
 private:
     void initRootObject();
 //    EPointer currEnvir;
