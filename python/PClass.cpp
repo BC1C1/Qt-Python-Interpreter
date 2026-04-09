@@ -176,7 +176,7 @@ namespace Py {
 			}
 
 			if (!head) {
-				qDebug() << "C3 MRO 错误：无法合并继承";
+				log("C3 MRO 错误：无法合并继承");
 				return result;
 			}
 

@@ -16,6 +16,7 @@
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
+#include "Logger.h"
 
 Q_DECLARE_METATYPE(Lex::Token)
 Q_DECLARE_METATYPE(QVector<Lex::Token>)
@@ -72,7 +73,14 @@ int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
 
-    MainWindow w;  
+    // ======================
+    // Logger 极简测试（3行）
+    // ======================
+    myStd::log("main 启动成功");
+    myStd::log("Logger 测试输出 1");
+    myStd::log("Logger 测试输出 2");
+
+    MainWindow w;
     w.show();
 
     return a.exec();

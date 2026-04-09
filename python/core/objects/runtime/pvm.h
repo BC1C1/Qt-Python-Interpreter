@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QVector>
-#include <QDebug>
 #include <QStack>
 #include <QFile>
 #include <QHash>

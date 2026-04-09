@@ -16,7 +16,18 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QTextEdit" name="codeEditor"/>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QTextEdit" name="codeEditor"/>
+      </item>
+      <item>
+       <widget class="QTextEdit" name="outputPanel">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -36,6 +47,7 @@
     <addaction name="actionnew_file"/>
     <addaction name="actionnew_project"/>
     <addaction name="actionopen"/>
+    <addaction name="actionsave"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -65,6 +77,11 @@
   <action name="actionopen">
    <property name="text">
     <string>open</string>
+   </property>
+  </action>
+  <action name="actionsave">
+   <property name="text">
+    <string>save</string>
    </property>
   </action>
  </widget>

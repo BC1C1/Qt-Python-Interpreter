@@ -13,7 +13,7 @@ void Core::execute(const Pro& project)
     auto& pyfilepath = project.currFilePath;
     QFile file(pyfilepath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "无法打开文件：" << pyfilepath;
+        log("无法打开文件：" + pyfilepath);
         return;
     }
     auto code = file.readAll().toStdString();

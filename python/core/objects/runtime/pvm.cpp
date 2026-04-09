@@ -24,6 +24,7 @@
 #include <qdir.h>
 #include "Core.h"
 #include "Project.h"
+#include "qtextstream.h"
 namespace vm {
     using Environment = Py::Environment;
     using BuiltinFuncPtr =
@@ -69,7 +70,6 @@ void PVM::stop()
 
 void PVM::resetAll()
 {
-    currCodes.clear();
     PC = 0;
     // isRunning = false; // 立刻要被置为true
     valueStack.clear();
@@ -90,8 +90,8 @@ void PVM::executeSingleCode()
     auto instruction = currCodes[PC];
     auto currentCode = instruction.code;
     auto operand = instruction.operand;
-    qDebug() << "执行指令：PC=" << PC << "，指令类型=" <<  CodeToQString(currentCode)
-             << "操作数：operand= " << operand.toString();
+    log("执行指令：PC=" + QString(PC) + "，指令类型=" + CodeToQString(currentCode)
+             + "操作数：operand= " + operand.toString());
     auto isGo = true;
     switch (currentCode)
     {
@@ -199,9 +199,9 @@ pointer PVM::getBasicObject(QVariant value)
 
 void PVM::dumpStack(const QString &hint)
 {
-    qDebug() << "\n==================== 栈调试 dump ====================";
-    qDebug() << "提示：" << hint;
-    qDebug() << "当前栈大小：" << valueStack.size();
+    log("\n==================== 栈调试 dump ====================");
+    log("提示：" + hint);
+    log("当前栈大小：" + valueStack.size());
 
     // QStack 遍历（从栈底 → 栈顶）
     for (int i = 0; i < valueStack.size(); ++i) {
@@ -209,12 +209,11 @@ void PVM::dumpStack(const QString &hint)
         QString typeStr = TypeToString(obj->getType().type);
         QString valueStr = obj->toString();
 
-        qDebug().noquote()
-            << "栈[" << i << "]"
-            << "类型：" << typeStr
-            << " | 值：" << valueStr;
+        log("栈[" + QString(i) + "]"
+            + "类型：" + typeStr
+            + " | 值：" + valueStr);
     }
-    qDebug() << "=====================================================\n";
+    log("=====================================================\n");
 }
 
 EPointer PVM::createNewEnvironment(EPointer currEnvir)
@@ -264,7 +263,7 @@ QStringList PVM::listDirectoryContents(const QString& path)
     QDir dir(path);
 
     if (!dir.exists()) {
-        qDebug() << "目录不存在:" << path;
+        log("目录不存在:" + path);
         return QStringList();
     }
 
@@ -281,7 +280,7 @@ QStringList PVM::listDirectoryContents(const QString& path)
 
 void PVM::halt_execute()
 {
-    qDebug() << "收到HALT停机指令";
+    log("收到HALT停机指令");
     stop();
 }
 
@@ -497,10 +496,10 @@ void PVM::create_iter_execute()
 {
     //        dumpStack("before create iterator");
     auto obj = popValue();
-    qDebug() << TypeToString(obj->getType().type);
+    log(TypeToString(obj->getType().type));
     auto iter = obj->__iter__();
     pushValue(iter);
-    qDebug() << "迭代器是否为空：" << (iter == nullptr);
+    log("迭代器是否为空：" + QString((iter == nullptr) ? "true" : "false"));
     //        dumpStack("after create iterator");
 }
 
@@ -662,11 +661,11 @@ void PVM::create_function_execute(QVariant operand)
     auto codeObj = operand.toByteArray();
     auto functionObj = makeShared<Py::PFunction>(listObj, dictObj, codeObj, nameObj, isClassFunction);
     pushValue(functionObj);
-    qDebug() << "以下是函数内部字节码";
+    log("以下是函数内部字节码");
     for (const auto& innerCode : Instruction::fromByteArray(codeObj)) {
-        qDebug() << innerCode.toString();
+        log(innerCode.toString());
     }
-    qDebug() << "函数字节码结束";
+    log("函数字节码结束");
 }
 
 
@@ -1080,7 +1079,7 @@ void PVM::le_execute(bool& isGo)
 void PVM::print_execute()
 {
     auto toPrint = popValue();
-    qDebug() << toPrint->toString();
+    log(toPrint->toString());
 }
 
 void PVM::jump_if_false_execute(const QVariant& operand, bool& isGo)
@@ -1109,10 +1108,10 @@ void PVM::run()
         while (isRunning && PC < currCodes.length()) {
             executeSingleCode();
         }
-        if (PC >= currCodes.size())     qDebug() << "虚拟机停机：指令执行完毕（PC越界）";
-        else                        qDebug() << "虚拟机停机：收到停止指令";
+        if (PC >= currCodes.size())     log("虚拟机停机：指令执行完毕（PC越界）");
+        else                        log("虚拟机停机：收到停止指令");
     } catch (std::runtime_error& e) {
-        qDebug() << e.what();
+        log(e.what());
     }
 
 }
@@ -1230,7 +1229,7 @@ bool saveInstructionsToTXT(const QVector<Instruction> &instructions, const QStri
 {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qDebug() << "文件打开失败：" << file.errorString();
+        log("文件打开失败：" + file.errorString());
         return false;
     }
 
@@ -1251,7 +1250,7 @@ QVector<Instruction> loadInstructionsFromTXT(const QString &filePath)
     QFile file(filePath);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "文件打开失败：" << file.errorString();
+        log("文件打开失败：" + file.errorString());
         return instructions;
     }
 

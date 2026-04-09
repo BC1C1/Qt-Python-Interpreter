@@ -383,7 +383,7 @@ void Compiler::compileExpression(APointer node)
     }
     default:{
         throwErrorLine(node->getLine());
-        qDebug() << "意外的类型: " + Parse::NodeTypeToQString(type);
+        log("意外的类型: " + Parse::NodeTypeToQString(type));
     }
     }
 }
@@ -431,7 +431,7 @@ void Compiler::compileStatement(APointer node)
             cache.push_back(Instruction{Code::PRINT});
         } catch (std::runtime_error& e) {
             throwErrorLine(node->getLine());
-            qDebug() << e.what();
+            log(e.what());
         }
         break;
     }
@@ -634,7 +634,7 @@ void Compiler::throwErrorLine(int line1, int line2)
     } else {
         msg = QString(u8"Complie Error, Between Line %1 and Line %2 :").arg(line1).arg(line2);
     }
-    qDebug() << msg;
+    log(msg);
 }
 
 

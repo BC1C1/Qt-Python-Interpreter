@@ -4,6 +4,7 @@
 #include <type_traits>
 #include "core/objects/runtime/pobject.h"
 #include <qdir.h>
+#include "Logger.h"
 
 using PObject = Py::PObject;
 // utils begin
@@ -44,17 +45,6 @@ QSharedPointer<Target> dynamicPointerCast(const QSharedPointer<Source>& source)
 //    }
 
 //    return QSharedPointer<Target>(source, rawTarget); // 这里的构造注意
-}
-// string cast. UTF-8 is the only storage type
-inline std::string qt2std(const QString& qStr)
-{
-    QByteArray utf8Bytes = qStr.toUtf8();
-    return std::string(utf8Bytes.constData(), utf8Bytes.size());
-}
-
-inline QString std2qt(const std::string& sStr)
-{
-    return QString::fromUtf8(sStr.data(), static_cast<int>(sStr.size()));
 }
 static QString findFile(const QString& searchPath, const QString& baseName, const QString& suffix)
 {
