@@ -7,6 +7,7 @@ Parser::Parser(QObject *parent) : QObject(parent), resultAst(nullptr), current(0
 
 pointer Parser::parse(const std::vector<Lex::Token> &tokens)
 {
+    clearAll();
     isParsing = true;
     this->tokens = &tokens;
     QVector<pointer> statements;
@@ -23,6 +24,14 @@ pointer Parser::parse(const std::vector<Lex::Token> &tokens)
     isParsing = false;
     this->resultAst = ret;
     return ret;
+}
+
+void Parser::clearAll()
+{
+    this->tokens = nullptr;
+    this->current = 0;
+    this->isParsing = false;
+    this->resultAst = nullptr;
 }
 
 pointer Parser::parseBlock(bool isNeedNewEnvir)
@@ -103,6 +112,8 @@ pointer Parser::parseStatement()
     if (returnStmt) return returnStmt;
     auto importStmt = parseImport();
     if (importStmt) return importStmt;
+    auto globalStmt = parseGlobal();
+    if (globalStmt) return globalStmt;
     return parseExpression();
 }
 
@@ -213,7 +224,7 @@ pointer Parser::parseFor()
     if (!match(TokenType::FOR)) return nullptr;
     auto line = getInstantLine();
     auto loopVar = parseLValue();
-    consume(TokenType::IN, u8"for语句需要in");
+    consume(TokenType::IN_TOKEN, u8"for语句需要in");
     auto list = parseExpression();
     consume(TokenType::COLON, u8"for语句缺少冒号");
     auto block = parseBlock(false);
@@ -324,6 +335,18 @@ pointer Parser::parseImport()
     return makeShared<Import>(route, getInstantLine());
 }
 
+pointer Parser::parseGlobal()
+{
+    if (!match(TokenType::GLOBAL)) return nullptr;
+    auto list = std::vector<pointer>();
+    do {
+        auto& token = consume(TokenType::IDENTIFIER, "global 后需要跟变量名");
+        auto ident = makeShared<Variable>(token.lexeme, false);
+        list.push_back(ident);
+    } while (match(TokenType::COMMA));
+    return makeShared<Global>(makeShared<List>(std::move(list), getInstantLine()), getInstantLine());
+}
+
 pointer Parser::parseExpression()
 {
     return parseOr();
@@ -353,9 +376,9 @@ pointer Parser::parseIn()
 {
     auto left = parseComparison();
 
-    while (!isAtEnd() && match(TokenType::IN)) {
+    while (!isAtEnd() && match(TokenType::IN_TOKEN)) {
         auto right = parseComparison();
-        left = makeShared<Binary>(TokenType::IN, left, right, getInstantLine());
+        left = makeShared<Binary>(TokenType::IN_TOKEN, left, right, getInstantLine());
     }
     return left;
 }
@@ -442,12 +465,12 @@ pointer Parser::parsePrimary()
         ret = makeShared<Float>(value, getInstantLine());
         break;
     }
-    case Lex::TokenType::TRUE: {
+    case Lex::TokenType::TRUE_TOKEN: {
         current += 1;
         ret = makeShared<Bool>(true, getInstantLine());
         break;
     }
-    case Lex::TokenType::FALSE: {
+    case Lex::TokenType::FALSE_TOKEN: {
         current += 1;
         ret = makeShared<Bool>(false, getInstantLine());
         break;
@@ -500,7 +523,7 @@ pointer Parser::parsePrimary()
         current += 1;
         break;
     }
-    case Lex::TokenType::ERROR: {
+    case Lex::TokenType::ERROR_TOKEN: {
         throwErrorMsg(u8"错误的Token");
         current += 1;
         break;
@@ -603,7 +626,7 @@ pointer Parser::parseDict()
 
 void Parser::throwErrorMsg(std::string text)
 {
-    throw std::runtime_error(text);
+    throw ParserError("缺失的左括号");
 }
 
 bool Parser::isAtEnd()
@@ -620,7 +643,7 @@ Lex::Token Parser::peekNext()
 {
     if (!outOfRange(1))
         return getTokens()[current + 1];
-    return Token(TokenType::ERROR, "out_of_range", getTokens()[current].line + 1);
+    return Token(TokenType::ERROR_TOKEN, "out_of_range", getTokens()[current].line + 1);
 }
 
 const Lex::Token &Parser::consume(Lex::TokenType type, const std::string &errorMsg)

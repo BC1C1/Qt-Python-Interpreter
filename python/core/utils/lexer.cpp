@@ -150,7 +150,7 @@ std::vector<Lex::Token> Lex::Lexer::scanPartToken(const std::string& line, int l
             std::string lexeme = line.substr(start, current - start);
 
             if (hasDot && (dotAfterPos == current)) {
-                tokens.emplace_back(TokenType::ERROR, lexeme, lineNum);
+                tokens.emplace_back(TokenType::ERROR_TOKEN, lexeme, lineNum);
             }
             else {
                 if (hasDot)
@@ -171,7 +171,7 @@ std::vector<Lex::Token> Lex::Lexer::scanPartToken(const std::string& line, int l
             // 检查是否正常闭合
             if (current >= lineLen) {
                 // 未闭合字符串，生成错误Token
-                tokens.emplace_back(TokenType::ERROR, "Unclosed string", lineNum);
+                tokens.emplace_back(TokenType::ERROR_TOKEN, "Unclosed string", lineNum);
             }
             else {
                 // 截取lexme
@@ -224,7 +224,7 @@ std::vector<Lex::Token> Lex::Lexer::scanPartToken(const std::string& line, int l
                 tokens.emplace_back(TokenType::NOT, "!", lineNum);
             }
             else {  // & 或 |（单独出现，错误）
-                tokens.emplace_back(TokenType::ERROR, "Invalid operator: " + std::string(1, c), lineNum);
+                tokens.emplace_back(TokenType::ERROR_TOKEN, "Invalid operator: " + std::string(1, c), lineNum);
             }
             current++;  // 跳过当前字符
         }
@@ -284,7 +284,7 @@ std::vector<Lex::Token> Lex::Lexer::scanPartToken(const std::string& line, int l
         }
         // 未知字符
         else {
-            tokens.emplace_back(TokenType::ERROR, "Unexpected character: " + std::string(1, c), lineNum);
+            tokens.emplace_back(TokenType::ERROR_TOKEN, "Unexpected character: " + std::string(1, c), lineNum);
             current++;  // 跳过错误字符，继续解析后续内容
         }
     }

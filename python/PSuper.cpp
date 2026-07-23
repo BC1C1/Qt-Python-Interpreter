@@ -64,4 +64,11 @@ namespace Py {
 		auto cls = getNextClass();
 		return cls->__getattribute__(attrName);
 	}
+	QVector<pointer> PSuper::getChildren() const
+	{
+		auto ret = QVector<pointer>();
+		ret.append(instance);
+		ret.append(currClass);
+		return ret;
+	}
 }

@@ -40,6 +40,13 @@ namespace Py {
 	{
 		return makeShared<PStr>(toString());
 	}
+	QVector<pointer> PDict::getChildren() const
+	{
+		auto ret = QVector<pointer>();
+		ret.append(QVector<pointer>::fromList(hashTable.keys()));
+		ret.append(QVector<pointer>::fromList(hashTable.values()));
+		return ret;
+	}
 	pointer PDict::operator[](const pointer& key)
 	{
 		auto iter = hashTable.find(key);

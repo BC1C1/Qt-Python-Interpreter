@@ -16,6 +16,10 @@ namespace Py {
 	{
 		return table->getObj(attrName);
 	}
+	QVector<pointer> PModel::getChildren() const
+	{
+		return table->getChildren(); // table is instance of Environment
+	}
 }
 
 

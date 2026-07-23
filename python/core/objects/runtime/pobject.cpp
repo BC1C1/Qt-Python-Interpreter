@@ -52,6 +52,11 @@ QVariant PObject::getValue() const
     throw std::runtime_error((QString(u8"类型：%1不可获取值").arg(TypeToString(type.type))).toUtf8().data());
 }
 
+QVector<PObject::pointer> PObject::getChildren() const
+{
+    return QVector<pointer>();
+}
+
 PObject::pointer PObject::asInt() const
 {
     this->noSuchCast(u8"int");

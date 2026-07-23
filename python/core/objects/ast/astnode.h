@@ -34,7 +34,8 @@ enum class NodeType {
     Break,
     Continue,
     Dict,
-    Import
+    Import,
+    Global
 };
 
 QString NodeTypeToQString(NodeType type);
@@ -246,6 +247,12 @@ class Import : public ANode {
 public:
     Import(pointer route, int line = 0);
     pointer route;
+    QJsonObject toJson() const override;
+};
+class Global : public ANode {
+public:
+    Global(pointer list, int line = 0);
+    pointer list;
     QJsonObject toJson() const override;
 };
 }

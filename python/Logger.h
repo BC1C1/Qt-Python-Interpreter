@@ -8,6 +8,14 @@
 #include <string>
 #include <QString>
 #include <QByteArray>
+#include <qdatetime.h>
+
+#define DEBUG_MODE
+#define PRINT_MOD
+#define INFO_MOD
+#define ERROR_MOD
+
+
 // string cast. UTF-8 is the only storage type
 inline std::string qt2std(const QString& qStr)
 {
@@ -21,9 +29,19 @@ inline QString std2qt(const std::string& sStr)
 }
 
 namespace myStd {
+    enum class LogLevel {
+        INFO_ = 0,
+        WARNING_,
+        ERROR_,
+        DEBUG_
+    };
     struct info {
-        info(const std::string& text = "") : text(text) {}
-        std::string text; // 内部统一存 UTF-8
+        info(const std::string& text = "", LogLevel level = LogLevel::DEBUG_, const QString& timeStamp = QString()) 
+            : text(text), level(level), timeStamp(timeStamp)
+        {}
+        std::string text; 
+        LogLevel level;
+        QString timeStamp;
     };
 
     class LoggerQueue {
@@ -49,12 +67,21 @@ namespace myStd {
         QQueue<info> queue;
         QMutex mtx;
     };
-
-    using OutputCallBack = void(*)(const char*);
-    static void printf_f(const char* data) {
-        printf("%s\n", data);
+    using Outputer_global = void*;
+    extern Outputer_global outputer_global;
+    using OutputCallBack = void(*)(const info&);
+    static void printf_f(const info& data) {
+        if (!outputer_global) return;
+        fprintf((FILE*)outputer_global, "%s\n", data.text.c_str());
     }
     extern OutputCallBack outputCallBack_global;
+
+
+    //using OutputCallBack = void(*)(const info&);
+    //static void printf_f(const info& data) {
+    //    printf("%s\n", data.text.c_str());
+    //}
+    //extern OutputCallBack outputCallBack_global;
 
     class Logger {
     public:
@@ -64,11 +91,10 @@ namespace myStd {
         }
         ~Logger() { stop(); }
 
-        // 底层只接收 UTF-8 std::string
-        void log(const std::string& text) {
+        void log(const info& i) {
             {
                 std::lock_guard<std::mutex> lock(cv_mtx);
-                infos.push(info(text));
+                infos.push(i);
             }
             cv.notify_one();
         }
@@ -99,7 +125,7 @@ namespace myStd {
                     info out;
                     infos.pop(out);
                     if (outputCallBack_global) {
-                        outputCallBack_global(out.text.c_str());
+                        outputCallBack_global(out);
                     }
                 }
             }
@@ -114,23 +140,32 @@ namespace myStd {
     };
 
     // 内部命名空间 log
-    inline void log(const std::string& info) {
-        Logger::instance().log(info);
+    inline void log(const std::string& info, LogLevel level) 
+    {
+        auto time = QDateTime::currentDateTime().toString();
+        Logger::instance().log(myStd::info(info, level, time));
     }
 }
 
 // ======================
 // 全局日志接口
 // ======================
-inline void log(const std::string& info) {
-    myStd::log(info);
+inline void logDebug(const QString& text) {
+    myStd::log(qt2std(text), myStd::LogLevel::DEBUG_);
+}
+inline void logInfo(const QString& text) {
+    myStd::log(qt2std(text), myStd::LogLevel::INFO_);
+}
+inline void logWarn(const QString& text) {
+    myStd::log(qt2std(text), myStd::LogLevel::WARNING_);
+}
+inline void logError(const QString& text) {
+    myStd::log(qt2std(text), myStd::LogLevel::ERROR_);
 }
 
-inline void log(const char* data) {
-    log(std::string(data));
+inline void log(const QString& text) {
+    logInfo(text);
 }
-
-// ✅ 使用你的转换函数
-inline void log(const QString& info) {
-    log(qt2std(info));
+inline void log(const char* text) {
+    logInfo(QString(text));
 }

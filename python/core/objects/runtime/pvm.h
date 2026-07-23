@@ -83,6 +83,9 @@ enum class Code: char {
     // import
     IMPORT,
 
+    // declear global var
+    DECLARE_GLOBAL,
+
     // 打印测试
     PRINT,
 
@@ -237,6 +240,9 @@ private:
     void ge_execute(bool& isGo);
     void lt_execute(bool& isGo);
     void le_execute(bool& isGo);
+
+    // -------------------------- global --------------------------
+    void declare_global_execute(const QVariant& );
 
     // -------------------------- 基础操作 --------------------------
     void halt_execute();

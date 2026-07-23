@@ -13,6 +13,7 @@ public:
     PIterator(pointer object);
     virtual pointer __next__() override;
     QString toString() const override;
+    virtual QVector<pointer> getChildren() const override;
 private:
     pointer object;
     int currentIndex;

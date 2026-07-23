@@ -18,6 +18,7 @@ namespace Py {
 
 		virtual QString toString() const override;
 		virtual pointer asString() const override;
+		virtual QVector<pointer> getChildren() const override;
 
 		pointer operator[](const pointer& key);
 

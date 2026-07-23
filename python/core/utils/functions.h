@@ -5,22 +5,50 @@
 #include "core/objects/runtime/pobject.h"
 #include <qdir.h>
 #include "Logger.h"
+#include <qmainwindow.h>
+#include "SecondaryWindow.h"
+
+#define COMPILE_DEBUG
 
 using PObject = Py::PObject;
 // utils begin
 template <typename T>
 constexpr bool is_pobject_v = std::is_base_of_v<PObject, T>;
+
+template <typename T>
+constexpr bool is_mainwindow_v = std::is_base_of_v<QMainWindow, T>;
+
 template <typename T, typename... Args>
-std::enable_if_t<is_pobject_v<T>, QSharedPointer<T>>
+std::enable_if_t<is_pobject_v<T> && !is_mainwindow_v<T>, QSharedPointer<T>>
 makeShared(Args&&... args) {
     auto obj = QSharedPointer<T>::create(std::forward<Args>(args)...);
     obj->init();
     return obj;
 }
+
 template <typename T, typename... Args>
-std::enable_if_t<!is_pobject_v<T>, QSharedPointer<T>>
+std::enable_if_t<is_mainwindow_v<T> && !is_pobject_v<T>, QSharedPointer<T>>
+makeShared(Args&&... args) {
+    auto obj = QSharedPointer<T>::create(std::forward<Args>(args)...);
+    obj->initAll();
+    return obj;
+}
+
+template <typename T, typename... Args>
+std::enable_if_t<!is_mainwindow_v<T> && !is_pobject_v<T>, QSharedPointer<T>>
 makeShared(Args&&... args) {
     return QSharedPointer<T>::create(std::forward<Args>(args)...);
+}
+
+template <typename T>
+constexpr bool isSecondaryWindow_v = std::is_base_of_v<SecondaryWindow, T>;
+
+template <typename T, typename... Args>
+std::enable_if_t<isSecondaryWindow_v<T>, T*>
+newWindow(Args&&... args) {
+    auto obj = new T(std::forward<Args>(args)...);
+    obj->connectToMainWindow();
+    return obj;
 }
 
 //template <typename T, typename... Args>
@@ -46,7 +74,7 @@ QSharedPointer<Target> dynamicPointerCast(const QSharedPointer<Source>& source)
 
 //    return QSharedPointer<Target>(source, rawTarget); // 这里的构造注意
 }
-static QString findFile(const QString& searchPath, const QString& baseName, const QString& suffix)
+inline static QString findFile(const QString& searchPath, const QString& baseName, const QString& suffix)
 {
     QDir directory(searchPath);
 
@@ -64,7 +92,7 @@ static QString findFile(const QString& searchPath, const QString& baseName, cons
 
     return QString();
 }
-static QStringList getAllFilesAbsolutePath(const QString& directoryPath)
+inline static QStringList getAllFilesAbsolutePath(const QString& directoryPath)
 {
     QDir directory(directoryPath);
 
@@ -83,6 +111,7 @@ static QStringList getAllFilesAbsolutePath(const QString& directoryPath)
 
     return absolutePaths;
 }
+
 // utils end
 
 #endif // FUNCTIONS_H

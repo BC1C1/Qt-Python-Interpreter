@@ -2,6 +2,7 @@
 #define ENVIRONMENT_H
 
 #include <QObject>
+#include <qset.h>
 #include "core/objects/runtime/pobject.h"
 namespace Py {
 class Environment : public QObject, public QEnableSharedFromThis<Environment>
@@ -19,8 +20,12 @@ public:
     void setParent(EPointer parentEnvir);
     void clear();
     Pointer getObj(const QString& name);
+    void addGlobal(const QString& name);
+    bool isGlobal(const QString& name) const;
+    QVector<Py::PObject::pointer> getChildren() const;
 public:
     QMap<QString, QSharedPointer<PObject>> vars;
+    QSet<QString> globalVars;
     EPointer parentEnvir;
 signals:
 

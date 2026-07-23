@@ -452,4 +452,18 @@ QJsonObject Import::toJson() const
     return ret;
 }
 
+Global::Global(pointer list, int line)
+    : ANode(NodeType::Global, line), list(list)
+{
+}
+
+QJsonObject Global::toJson() const
+{
+    QJsonObject ret;
+    ret["type"] = "global";
+    ret["list"] = list->toJson();
+    ret["line"] = getLine();
+    return ret;
+}
+
 }

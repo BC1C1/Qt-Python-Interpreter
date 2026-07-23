@@ -126,9 +126,24 @@
     <ClCompile Include="Logger.cpp">
       <Filter>源文件\core\utils</Filter>
     </ClCompile>
+    <ClCompile Include="Exception.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="newprojectwidget.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SecondaryWindow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CompileOptimizer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="..\..\..\qt\python\mainwindow.ui">
+      <Filter>资源文件</Filter>
+    </QtUic>
+    <QtUic Include="newprojectwidget.ui">
       <Filter>资源文件</Filter>
     </QtUic>
   </ItemGroup>
@@ -184,6 +199,9 @@
     <QtMoc Include="Core.h">
       <Filter>头文件</Filter>
     </QtMoc>
+    <QtMoc Include="newprojectwidget.h">
+      <Filter>头文件</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PClass.h">
@@ -212,6 +230,15 @@
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>头文件\core\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SecondaryWindow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CompileOptimizer.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

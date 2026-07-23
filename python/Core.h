@@ -7,6 +7,7 @@
 #include "core/utils/functions.h"
 #include "qobject.h"
 #include "Project.h"
+#include "Logger.h"
 
 using Lex::Lexer;
 using Lex::Token;
@@ -20,6 +21,7 @@ class Core : public QObject
 	Q_OBJECT
 private:
 	using EPointer = QSharedPointer<Environment>;
+
 public:
 	Core(QObject* parent = nullptr);
 	void execute(const Pro& project);

@@ -53,6 +53,7 @@ public:
     virtual QString toString() const = 0;
     virtual QVariant getValue() const;
     virtual void init() {}
+    virtual QVector<pointer> getChildren() const;
 
     // 类型转换声明
     virtual pointer asInt() const;

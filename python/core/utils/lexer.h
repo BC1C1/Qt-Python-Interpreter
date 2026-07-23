@@ -8,12 +8,15 @@
 #include <QObject>
 #include <QString>
 #include <QVector>
+
+
+
 namespace Lex
 {
     enum class TokenType {
         // 关键字
-        IF, ELSE, ELIF, WHILE, PRINT, INPUT, TRUE, FALSE, IN, FOR,
-        DEF, RETURN, CLASS, BREAK, CONTINUE, PASS, SUPER, IMPORT,
+        IF, ELSE, ELIF, WHILE, PRINT, INPUT, TRUE_TOKEN, FALSE_TOKEN, IN_TOKEN, FOR,
+        DEF, RETURN, CLASS, BREAK, CONTINUE, PASS, SUPER, IMPORT, GLOBAL,
         // 标识符 (变量名,函数名)
         IDENTIFIER,
         // 字面量
@@ -36,7 +39,7 @@ namespace Lex
         // 结束符
         EOF_TOKEN,
         // 错误标识符
-        ERROR
+        ERROR_TOKEN
     };
     struct Token {
         Token() {}
@@ -55,15 +58,15 @@ namespace Lex
             case TokenType::INDENT: os << "INDENT"; break;
             case TokenType::DEDENT: os << "DEDENT"; break;
             case TokenType::IF: os << "IF"; break;
-            case TokenType::IN: os << "IN"; break;
+            case TokenType::IN_TOKEN: os << "IN"; break;
             case TokenType::FOR: os << "FOR"; break;
             case TokenType::ELSE: os << "ELSE"; break;
             case TokenType::ELIF: os << "ELIF"; break;
             case TokenType::WHILE: os << "WHILE"; break;
             case TokenType::PRINT: os << "PRINT"; break;
             case TokenType::INPUT: os << "INPUT"; break;
-            case TokenType::TRUE: os << "TRUE"; break;
-            case TokenType::FALSE: os << "FALSE"; break;
+            case TokenType::TRUE_TOKEN: os << "TRUE"; break;
+            case TokenType::FALSE_TOKEN: os << "FALSE"; break;
             case TokenType::IDENTIFIER: os << "IDENTIFIER"; break;
             case TokenType::STRING: os << "STRING"; break;
             case TokenType::PLUS: os << "PLUS"; break;
@@ -86,7 +89,7 @@ namespace Lex
             case TokenType::LBRACKET: os << "LBRACKET"; break;
             case TokenType::RBRACKET: os << "RBRACKET"; break;
             case TokenType::EOF_TOKEN: os << "EOF"; break;
-            case TokenType::ERROR: os << "ERROR"; break;
+            case TokenType::ERROR_TOKEN: os << "ERROR"; break;
             case TokenType::INT: os << "INT"; break;
             case TokenType::FLOAT: os << "FLOAT"; break;
             case TokenType::DEF: os << "DEF"; break;
@@ -95,6 +98,7 @@ namespace Lex
             case TokenType::DOT: os << "DOT"; break;
             case TokenType::BREAK: os << "BREAK"; break;
             case TokenType::CONTINUE: os << "CONTINUE"; break;
+            case TokenType::GLOBAL: os << "GLOBAL"; break;
             }
             os << ", '" << token.lexeme << "', line " << token.line << ")";
             return os;
@@ -106,15 +110,15 @@ namespace Lex
                 case TokenType::INDENT:    return QString("INDENT");
                 case TokenType::DEDENT:    return QString("DEDENT");
                 case TokenType::IF:        return QString("IF");
-                case TokenType::IN:        return QString("IN");
+                case TokenType::IN_TOKEN:        return QString("IN");
                 case TokenType::FOR:       return QString("FOR");
                 case TokenType::ELSE:      return QString("ELSE");
                 case TokenType::ELIF:      return QString("ELIF");
                 case TokenType::WHILE:     return QString("WHILE");
                 case TokenType::PRINT:     return QString("PRINT");
                 case TokenType::INPUT:     return QString("INPUT");
-                case TokenType::TRUE:      return QString("TRUE");
-                case TokenType::FALSE:     return QString("FALSE");
+                case TokenType::TRUE_TOKEN:      return QString("TRUE");
+                case TokenType::FALSE_TOKEN:     return QString("FALSE");
                 case TokenType::IDENTIFIER:return QString("IDENTIFIER");
                 case TokenType::STRING:    return QString("STRING");
                 case TokenType::PLUS:      return QString("PLUS");
@@ -137,7 +141,7 @@ namespace Lex
                 case TokenType::LBRACKET:  return QString("LBRACKET");
                 case TokenType::RBRACKET:  return QString("RBRACKET");
                 case TokenType::EOF_TOKEN: return QString("EOF");
-                case TokenType::ERROR:     return QString("ERROR");
+                case TokenType::ERROR_TOKEN:     return QString("ERROR");
                 case TokenType::INT:       return QString("INT");
                 case TokenType::FLOAT:     return QString("FLOAT");
                 case TokenType::DEF:       return QString("DEF");
@@ -146,6 +150,7 @@ namespace Lex
                 case TokenType::DOT:       return QString("DOT");
                 case TokenType::BREAK:     return QString("BREAK");
                 case TokenType::CONTINUE:  return QString("CONTINUE");
+                case TokenType::GLOBAL:    return QString("GLOBAL");
                 default:                   return QString("UNKNOWN_TOKEN");
             }
         }
@@ -156,15 +161,15 @@ namespace Lex
                 case TokenType::INDENT:    return QString("INDENT");
                 case TokenType::DEDENT:    return QString("DEDENT");
                 case TokenType::IF:        return QString("IF");
-                case TokenType::IN:        return QString("IN");
+                case TokenType::IN_TOKEN:        return QString("IN");
                 case TokenType::FOR:       return QString("FOR");
                 case TokenType::ELSE:      return QString("ELSE");
                 case TokenType::ELIF:      return QString("ELIF");
                 case TokenType::WHILE:     return QString("WHILE");
                 case TokenType::PRINT:     return QString("PRINT");
                 case TokenType::INPUT:     return QString("INPUT");
-                case TokenType::TRUE:      return QString("TRUE");
-                case TokenType::FALSE:     return QString("FALSE");
+                case TokenType::TRUE_TOKEN:      return QString("TRUE");
+                case TokenType::FALSE_TOKEN:     return QString("FALSE");
                 case TokenType::IDENTIFIER:return QString("IDENTIFIER");
                 case TokenType::STRING:    return QString("STRING");
                 case TokenType::PLUS:      return QString("PLUS");
@@ -187,7 +192,7 @@ namespace Lex
                 case TokenType::LBRACKET:  return QString("LBRACKET");
                 case TokenType::RBRACKET:  return QString("RBRACKET");
                 case TokenType::EOF_TOKEN: return QString("EOF");
-                case TokenType::ERROR:     return QString("ERROR");
+                case TokenType::ERROR_TOKEN:     return QString("ERROR");
                 case TokenType::INT:       return QString("INT");
                 case TokenType::FLOAT:     return QString("FLOAT");
                 case TokenType::DEF:       return QString("DEF");
@@ -199,6 +204,7 @@ namespace Lex
                 case TokenType::PASS:      return QString("PASS");
                 case TokenType::SUPER:     return QString("SUPER");
                 case TokenType::IMPORT:    return QString("IMPORT");
+                case TokenType::GLOBAL:    return QString("GLOBAL");
                 default:                   return QString("UNKNOWN_TOKEN");
             }
         }
@@ -217,12 +223,12 @@ namespace Lex
         {"while", TokenType::WHILE},
         {"print", TokenType::PRINT},
         {"input", TokenType::INPUT},
-        {"True", TokenType::TRUE},
-        {"False", TokenType::FALSE},
+        {"True", TokenType::TRUE_TOKEN},
+        {"False", TokenType::FALSE_TOKEN},
         {"or", TokenType::OR},
         {"and", TokenType::AND},
         {"not", TokenType::NOT},
-        {"in", TokenType::IN},
+        {"in", TokenType::IN_TOKEN},
         {"for", TokenType::FOR},
         {"def", TokenType::DEF},
         {"return", TokenType::RETURN},
@@ -232,6 +238,7 @@ namespace Lex
         {"pass", TokenType::PASS},
         {"super", TokenType::SUPER},
         {"import", TokenType::IMPORT},
+        {"global", TokenType::GLOBAL}
     };
     // 我们拿到的程序是一大串由空格，缩进组成的文本，第一步是按照回车键分割字符串
     // 随后把每一行的字符串按照空格分隔，解析文本成token

@@ -15,13 +15,10 @@ void Compiler::setAst(APointer ast)
 QVector<Instruction> Compiler::compileAST()
 {
     cache.clear();
-    try {
-        compileFunctions(ast);
-        compileClasses(ast);
-        compileBlock(ast);
-    } catch (...) {
-        throw;
-    }
+    compileFunctions(ast);
+    compileClasses(ast);
+    compileBlock(ast);
+
     cache.push_back(Instruction{Code::HALT});
     return cache;
 }
@@ -30,7 +27,7 @@ void Compiler::compileBlock(APointer node)
 {
     auto block = dynamicPointerCast<Parse::Block>(node);
     if (!node) {
-        throw std::runtime_error(u8"无效的block");
+        throw CompilerError(u8"无效的block");
     }
     for (const auto& s : block->statements) {
         auto type = s->getType();
@@ -57,20 +54,27 @@ void Compiler::compileFunctions(APointer node)
             switch (e->getType())
             {
             case NodeType::Variable: {
-                if (isTransed)
-                    throw std::runtime_error(u8"关键字参数不能先于位置参数");
+                if (isTransed) {
+                    QString errMsg = QString(u8"关键字参数不能先于位置参数, 行号: %1")
+                        .arg(e->getLine());
+                    throw CompilerError(errMsg);
+                }
                 posparams.append(e);
                 break;
             }
             case NodeType::Assignment: {
-                if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable)
-                    throw std::runtime_error(u8"无效的函数参数");
+                if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable) {
+                    QString errMsg = QString(u8"无效的函数参数,行号: %1").arg(e->getLine());
+                    throw CompilerError(errMsg);
+                }
+
                 keyparams.append(e);
                 isTransed = true;
                 break;
             }
             default:
-                throw std::runtime_error(u8"无效的函数参数");
+                QString errMsg = QString(u8"无效的函数参数,行号: %1").arg(e->getLine());
+                throw CompilerError(errMsg);
                 break;
             }
         }
@@ -124,20 +128,26 @@ void Compiler::compileFunctionInClass(APointer node)
         switch (e->getType())
         {
         case NodeType::Variable: {
-            if (isTransed)
-                throw std::runtime_error(u8"关键字参数不能先于位置参数");
+            if (isTransed) {
+                QString errMsg = QString(u8"关键字参数不能先于位置参数, 行号: %1")
+                    .arg(e->getLine());
+                throw CompilerError(errMsg);
+            }
             posparams.append(e);
             break;
         }
         case NodeType::Assignment: {
-            if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable)
-                throw std::runtime_error(u8"无效的函数参数");
+            if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable) {
+                QString errMsg = QString(u8"无效的函数参数,行号: %1").arg(e->getLine());
+                throw CompilerError(errMsg);
+            }
             keyparams.append(e);
             isTransed = true;
             break;
         }
         default:
-            throw std::runtime_error(u8"无效的函数参数");
+            QString errMsg = QString(u8"无效的函数参数,行号: %1").arg(e->getLine());
+            throw CompilerError(errMsg);
             break;
         }
     }
@@ -190,8 +200,10 @@ void Compiler::compileClasses(APointer node)
         for (const auto& assign : staticMembers) {
             auto assignStmt = dynamicPointerCast<Parse::Assignment>(assign);
             compileExpression(assignStmt->right);
-            if (assignStmt->left->getType() != NodeType::Variable)
-                throw std::runtime_error(u8"意外的赋值");
+            if (assignStmt->left->getType() != NodeType::Variable) {
+                QString errMsg = QString(u8"意外的赋值, 行号: %1").arg(assignStmt->getLine());
+                throw CompilerError(errMsg);
+            }
             auto& varName = dynamicPointerCast<Parse::Variable>(assignStmt->left)->name;
             cache.push_back(Instruction{ Code::LOAD_STRING, QString::fromStdString(varName) });
         }
@@ -231,7 +243,9 @@ void Compiler::compileLeftValue(APointer node)
         break;
     }
     default: {
-        throw std::runtime_error(QString(u8"该结点不可作为左值, 结点类型: " + Parse::NodeTypeToQString(type)).toUtf8().data());
+        QString errMsg = QString(u8"该结点不可作为左值, 结点类型: %1, 行号: %2")
+            .arg(Parse::NodeTypeToQString(type)).arg(node->getLine());
+        throw CompilerError(errMsg);
         break;
     }
     }
@@ -316,9 +330,9 @@ void Compiler::compileExpression(APointer node)
         case Lex::TokenType::LT: {cache.push_back(Instruction{Code::LT}); break;}
 
         default: {
-            throw std::runtime_error(QString("%1不可做为操作数")
-                                     .arg(Lex::Token::TypeToQStringStatic(binary->op))
-                                     .toUtf8().data());
+            QString errMsg = QString("%1不可做为操作数, 行号: %2")
+                .arg(Lex::Token::TypeToQStringStatic(binary->op)).arg(node->getLine());
+            throw CompilerError(errMsg);
             break;
         }
         }
@@ -348,14 +362,18 @@ void Compiler::compileExpression(APointer node)
         for (const auto& e : callStmt->params) {
             if (e->getType() == NodeType::Assignment) {
                 if (((Parse::Assignment*)e.get())->left->getType() != NodeType::Variable) {
-                    throw std::runtime_error(u8"无效的参数");
+                    QString errMsg = QString(u8"无效的参数, 行号: %1").arg(e->getLine());
+                    throw CompilerError(errMsg);
                 }
                 isTransed = true;
                 keyParams.append(e);
             }
             else {
-                if (isTransed)
-                    throw std::runtime_error(u8"关键字参数不能先于位置参数");
+                if (isTransed) {
+                    QString errMsg = QString(u8"关键字参数不能先于位置参数, 行号: %1")
+                        .arg(e->getLine());
+                    throw CompilerError(errMsg);
+                }
                 posParams.append(e);
             }
         }
@@ -382,8 +400,12 @@ void Compiler::compileExpression(APointer node)
         break;
     }
     default:{
-        throwErrorLine(node->getLine());
-        log("意外的类型: " + Parse::NodeTypeToQString(type));
+        //throwErrorLine(node->getLine());
+        //log("意外的类型: " + Parse::NodeTypeToQString(type));
+        QString errMsg = QString("意外的类型: %1, 行号: %2")
+            .arg(Parse::NodeTypeToQString(type))
+            .arg(node->getLine());
+        throw CompilerError(errMsg);
     }
     }
 }
@@ -419,20 +441,19 @@ void Compiler::compileStatement(APointer node)
             break;
         }
         default: {
-            throwErrorLine(assignment->getLine());
+            //throwErrorLine(assignment->getLine());
+            QString errMsg = QString("意外的类型: %1 行号: %2")
+                .arg(Parse::NodeTypeToQString(type))
+                .arg(node->getLine());
+            throw CompilerError(errMsg);
         }
         }
         break;
     }
     case NodeType::Print: {
         auto printStmt = dynamicPointerCast<Parse::Print>(node);
-        try {
-            compileExpression(printStmt->expression);
-            cache.push_back(Instruction{Code::PRINT});
-        } catch (std::runtime_error& e) {
-            throwErrorLine(node->getLine());
-            log(e.what());
-        }
+        compileExpression(printStmt->expression);
+        cache.push_back(Instruction{Code::PRINT});
         break;
     }
     case NodeType::If: {
@@ -620,21 +641,17 @@ void Compiler::compileStatement(APointer node)
     case NodeType::Class: {
         break;
     }
+    case NodeType::Global: {
+        auto& list = ((Parse::List*)(((Parse::Global*)(node.get()))->list.get()))->elements;
+        for (const auto& e : list) {
+            auto& name = ((Parse::Variable*)(e.get()))->name;
+            cache.push_back(Instruction{ Code::DECLARE_GLOBAL, QString::fromStdString(name) });
+        }
+    }
     default:
         compileExpression(node);
         break;
     }
-}
-
-void Compiler::throwErrorLine(int line1, int line2)
-{
-    QString msg;
-    if (line2 == -1) {
-        msg = QString(u8"Complie Error, Line %1 :").arg(line1);
-    } else {
-        msg = QString(u8"Complie Error, Between Line %1 and Line %2 :").arg(line1).arg(line2);
-    }
-    log(msg);
 }
 
 

@@ -16,6 +16,7 @@ namespace Py {
 			QSharedPointer<Environment> envir) override;
 
 		virtual pointer __getattribute__(const QString& attrName) override;
+		virtual QVector<pointer> getChildren() const override;
 
 	private:
 		pointer instance;

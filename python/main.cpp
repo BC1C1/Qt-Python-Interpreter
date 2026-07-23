@@ -76,12 +76,17 @@ int main(int argc, char* argv[])
     // ======================
     // Logger 极简测试（3行）
     // ======================
-    myStd::log("main 启动成功");
-    myStd::log("Logger 测试输出 1");
-    myStd::log("Logger 测试输出 2");
+    logDebug("main 启动成功");
+    logDebug("Logger 测试输出 1");
+    logDebug("Logger 测试输出 2");
 
-    MainWindow w;
-    w.show();
-
+    //MainWindow w;
+    auto w = makeShared<MainWindow>();
+    w->show();
+    log("普通黑色日志");
+    logDebug("灰色调试");
+    logInfo("黑色信息");
+    logWarn("橙色警告");
+    logError("红色错误");
     return a.exec();
 }

@@ -22,6 +22,14 @@ namespace Py {
 		return QString("a instance of %1").arg(classObj->toString());
 	}
 
+	QVector<pointer> PInstance::getChildren() const
+	{
+		auto ret = QVector<pointer>();
+		ret.append(classObj);
+		ret.append(QVector<pointer>::fromList(privateMembers.values()));
+		return ret;
+	}
+
 	pointer PInstance::getClassObj() const
 	{
 		return classObj;

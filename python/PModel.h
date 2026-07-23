@@ -12,7 +12,7 @@ namespace Py {
 		PModel(EPointer envir);
 		virtual QString toString() const override;
 		virtual pointer __getattribute__(const QString& attrName) override;
-
+		virtual QVector<pointer> getChildren() const override;
 
 	private:
 		EPointer table;

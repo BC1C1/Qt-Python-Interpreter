@@ -12,6 +12,7 @@ namespace Py {
 	public:
 		PInstance(EPointer envir, pointer classObj);
 		virtual QString toString() const override;
+		virtual QVector<pointer> getChildren() const override;
 		pointer getClassObj() const;
 
 		virtual void __setattribute__(const QString& attrName, const pointer& obj) override;

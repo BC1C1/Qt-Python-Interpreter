@@ -5,6 +5,7 @@
 #include "core/objects/ast/astnode.h"
 #include "core/utils/lexer.h"
 #include "core/utils/functions.h"
+#include "Exception.h"
 
 namespace Parse {
 using Lex::Token;
@@ -15,6 +16,7 @@ class Parser : public QObject
 public:
     explicit Parser(QObject *parent = nullptr);
     pointer parse(const std::vector<Token>& tokens);
+    void clearAll();
 private:
     pointer parseBlock(bool isNeedNewEnvir);
 
@@ -40,6 +42,8 @@ private:
     pointer parseClass();
 
     pointer parseImport();
+
+    pointer parseGlobal();
 private:
     pointer parseExpression();
     pointer parseOr();

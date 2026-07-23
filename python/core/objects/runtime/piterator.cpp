@@ -51,6 +51,15 @@ QString PIterator::toString() const
     return "Iterator";
 }
 
+QVector<pointer> PIterator::getChildren() const
+{
+    auto ret = QVector<pointer>{object};
+    if (listCache) ret.append(listCache->sharedFromThis());
+    if (dictCache) ret.append(dictCache->sharedFromThis());
+    ret.append(listCache);
+    return ret;
+}
+
 }
 
 

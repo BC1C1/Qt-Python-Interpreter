@@ -6,7 +6,6 @@
 #include "core/objects/runtime/pbool.h"
 #include "core/objects/runtime/pfloat.h"
 #include "core/objects/runtime/plist.h"
-#include "core/objects/runtime/pnone.h"
 #include "core/objects/runtime/piterator.h"
 #include "core/objects/runtime/environment.h"
 #include "core/objects/runtime/pfunction.h"
@@ -25,6 +24,7 @@
 #include "Core.h"
 #include "Project.h"
 #include "qtextstream.h"
+#include "Exception.h"
 namespace vm {
     using Environment = Py::Environment;
     using BuiltinFuncPtr =
@@ -90,8 +90,9 @@ void PVM::executeSingleCode()
     auto instruction = currCodes[PC];
     auto currentCode = instruction.code;
     auto operand = instruction.operand;
-    log("执行指令：PC=" + QString(PC) + "，指令类型=" + CodeToQString(currentCode)
-             + "操作数：operand= " + operand.toString());
+    log(QString("执行指令：PC= %1 ，指令类型= %2, 操作数：operand= %3")
+        .arg(PC).arg(CodeToQString(currentCode)).arg(operand.toString())
+    );
     auto isGo = true;
     switch (currentCode)
     {
@@ -143,6 +144,8 @@ void PVM::executeSingleCode()
     case Code::GE:                  ge_execute(isGo);                   break;
     case Code::LT:                  lt_execute(isGo);                   break;
     case Code::LE:                  le_execute(isGo);                   break;
+
+    case Code::DECLARE_GLOBAL:      declare_global_execute(operand);    break;
 
     case Code::POP:                 popValue();                         break;
     case Code::PRINT:               print_execute();                    break;
@@ -1076,6 +1079,11 @@ void PVM::le_execute(bool& isGo)
     pushValue(obj1->__le__(obj2));
 }
 
+void PVM::declare_global_execute(const QVariant& operand)
+{
+    currEnvir()->addGlobal(operand.toString());
+}
+
 void PVM::print_execute()
 {
     auto toPrint = popValue();
@@ -1104,15 +1112,11 @@ void PVM::throwErrMsg(const std::string &msg)
 
 void PVM::run()
 {
-    try {
-        while (isRunning && PC < currCodes.length()) {
-            executeSingleCode();
-        }
-        if (PC >= currCodes.size())     log("虚拟机停机：指令执行完毕（PC越界）");
-        else                        log("虚拟机停机：收到停止指令");
-    } catch (std::runtime_error& e) {
-        log(e.what());
+    while (isRunning && PC < currCodes.length()) {
+        executeSingleCode();
     }
+    if (PC >= currCodes.size())     log("虚拟机停机：指令执行完毕（PC越界）");
+    else                            log("虚拟机停机：收到停止指令");
 
 }
 
@@ -1173,6 +1177,8 @@ QString CodeToQString(Code code)
     case Code::CREATE_SUPER:    return "CREATE_SUPER";
         // import
     case Code::IMPORT:          return "IMPORT";
+        // global
+    case Code::DECLARE_GLOBAL:  return "DECLEAR_GLOBAL";
 
         // 算数
     case Code::ADD:             return "ADD";
@@ -1349,6 +1355,7 @@ Code QStringToCode(QString string)
         {"POP", Code::POP},
         {"PRINT", Code::PRINT},
         {"HALT", Code::HALT},
+        {"DECLARE_GLOBAL", Code::DECLARE_GLOBAL},
         {"INVALID", Code::INVALID}
     };
 

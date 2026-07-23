@@ -21,7 +21,7 @@ class Project
 {
 public:
     // 创建项目
-    static Pro createProject(const QString& projName, const QString& basePath);
+    static Pro createProject(const QString& projName, const QString& basePath, bool isEmpty = true);
 
     // 从某个文件路径向上查找项目根
     static QString findProjectRoot(const QString& filePath);

@@ -17,6 +17,7 @@ namespace Py {
 		virtual void init() override;
 		virtual QString toString() const override;
 		QVariant getValue() const override;
+		virtual QVector<pointer> getChildren() const override;
 
 		virtual pointer __instance__(
 			const pointer& listParams,

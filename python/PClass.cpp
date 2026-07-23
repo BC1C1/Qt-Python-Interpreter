@@ -41,6 +41,16 @@ namespace Py {
 	{
 		return QVariant(u8"no value in class");
 	}
+	QVector<pointer> PClass::getChildren() const
+	{
+		auto ret = QVector<pointer>();
+		for (const auto& f : functions)
+			ret.push_back(f);
+		for (const auto& m : staticMembers) {
+			ret.push_back(m);
+		}
+		ret.append(parents);
+	}
 	pointer PClass::__instance__(
 		const pointer& listParams,
 		const pointer& dictParams,

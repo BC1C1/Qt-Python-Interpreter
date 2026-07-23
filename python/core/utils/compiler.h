@@ -8,6 +8,7 @@
 
 #include "core/objects/ast/astnode.h"
 #include "core/objects/runtime/pvm.h"
+#include "Exception.h"
 
 namespace Compile {
 using APointer = Parse::pointer;
@@ -41,8 +42,6 @@ private:
 
     void compileStatement(APointer node);
 
-private:
-    void throwErrorLine(int line1, int line2 = -1);
 private:
     APointer ast;
     QVector<Instruction> cache;

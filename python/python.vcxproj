@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CompileOptimizer.cpp" />
     <ClCompile Include="Core.cpp" />
     <ClCompile Include="core\objects\ast\astnode.cpp" />
     <ClCompile Include="core\objects\runtime\blockandframe.cpp" />
@@ -169,21 +170,29 @@
     <ClCompile Include="core\utils\functions.cpp" />
     <ClCompile Include="core\utils\lexer.cpp" />
     <ClCompile Include="core\utils\parser.cpp" />
+    <ClCompile Include="Exception.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="newprojectwidget.cpp" />
     <ClCompile Include="PClass.cpp" />
     <ClCompile Include="PDict.cpp" />
     <ClCompile Include="PInstance.cpp" />
     <ClCompile Include="PModel.cpp" />
     <ClCompile Include="Project.cpp" />
     <ClCompile Include="PSuper.cpp" />
+    <ClCompile Include="SecondaryWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="..\..\..\qt\python\mainwindow.ui" />
+    <QtUic Include="newprojectwidget.ui" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CompileOptimizer.h" />
+    <ClInclude Include="Exception.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="SecondaryWindow.h" />
+    <QtMoc Include="newprojectwidget.h" />
     <ClInclude Include="Project.h" />
     <QtMoc Include="Core.h" />
     <ClInclude Include="core\objects\ast\astnode.h" />
