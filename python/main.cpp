@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
 
     // ======================
-    // Logger 极简测试（3行）
+    // Logger 极简测试
     // ======================
     logDebug("main 启动成功");
     logDebug("Logger 测试输出 1");

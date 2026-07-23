@@ -13,130 +13,202 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="头文件\core">
-      <UniqueIdentifier>{9d292457-4643-4870-bad3-ab93d7cbb008}</UniqueIdentifier>
+    <Filter Include="头文件\Frontend">
+      <UniqueIdentifier>{d1a6bb5c-ae5a-4e42-bdf9-fedd8df28c80}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\core\objects">
-      <UniqueIdentifier>{a029b414-0fcf-462a-a3d3-cc49aafc9080}</UniqueIdentifier>
+    <Filter Include="头文件\InterpreterCore">
+      <UniqueIdentifier>{84006a0a-0558-4eec-a272-1de98b370faa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\core">
-      <UniqueIdentifier>{662f7214-1d49-48a8-b264-08df9e3d8605}</UniqueIdentifier>
+    <Filter Include="头文件\RuntimeUtils">
+      <UniqueIdentifier>{87349d15-4b07-4dcb-8ad1-9f64c4cd9c4e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\core\utils">
-      <UniqueIdentifier>{2f27a66e-db75-4f5e-80b6-799ac9204e3e}</UniqueIdentifier>
+    <Filter Include="头文件\GuiHost">
+      <UniqueIdentifier>{e0279bf6-c901-42f9-864e-a94f79486257}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\core\utils">
-      <UniqueIdentifier>{a941e49b-62f5-4178-8cfa-15502590ce62}</UniqueIdentifier>
+    <Filter Include="头文件\Frontend\Lexer">
+      <UniqueIdentifier>{4c620639-a5e3-4ac1-8a56-300413479190}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\core\objects\ast">
-      <UniqueIdentifier>{2c40cc4c-6bd4-4840-9b2e-d4edb1d289bd}</UniqueIdentifier>
+    <Filter Include="头文件\Frontend\Parser">
+      <UniqueIdentifier>{2c39534f-33f9-4d84-aa0d-1124ad602b4f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="头文件\core\objects\runtime">
-      <UniqueIdentifier>{55699b35-bf01-4c7b-8afb-28b3f20a2a40}</UniqueIdentifier>
+    <Filter Include="头文件\Frontend\AST">
+      <UniqueIdentifier>{e26209a2-454c-4b41-8aed-5ea9c6faaa5a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\core\objects">
-      <UniqueIdentifier>{dbe18810-1b83-49c7-8d27-942e3f902006}</UniqueIdentifier>
+    <Filter Include="头文件\Frontend\Compiler">
+      <UniqueIdentifier>{2e38081f-302d-4ffd-8084-1fa793f494fa}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\core\objects\ast">
-      <UniqueIdentifier>{775aef88-74c3-47c5-97c5-ad38360a24ba}</UniqueIdentifier>
+    <Filter Include="头文件\InterpreterCore\PObjectSystem">
+      <UniqueIdentifier>{72ada935-5da3-4ea9-bc61-7c080ab65519}</UniqueIdentifier>
     </Filter>
-    <Filter Include="源文件\core\objects\runtime">
-      <UniqueIdentifier>{346b8188-2edf-40c4-97e9-afc0bc8f389c}</UniqueIdentifier>
+    <Filter Include="头文件\InterpreterCore\PObjectSystem\Basic">
+      <UniqueIdentifier>{f990ad9c-1255-439e-b3e3-57ad9de549c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\InterpreterCore\PObjectSystem\Container">
+      <UniqueIdentifier>{7c641e98-630c-4d1d-8027-28e7073d7216}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\InterpreterCore\PObjectSystem\Class">
+      <UniqueIdentifier>{306fab7e-c6eb-42f8-a32c-2d8339abbe4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\InterpreterCore\PObjectSystem\Function">
+      <UniqueIdentifier>{8f939f37-ad4d-447f-8dc7-47bd7c438083}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\InterpreterCore\RuntimeEnv">
+      <UniqueIdentifier>{caa81b86-d1de-4e0c-b4b1-18d7918e8291}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\InterpreterCore\PVM">
+      <UniqueIdentifier>{7e4e925b-dbb2-4826-bf86-5cafe94d5d95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\RuntimeUtils\Logger">
+      <UniqueIdentifier>{f29da59b-3bdf-4c34-b295-d7477bf504c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\RuntimeUtils\Exception">
+      <UniqueIdentifier>{939422af-a1e1-4fd9-92f4-f58e3147d545}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\RuntimeUtils\CommonFunc">
+      <UniqueIdentifier>{e19732bf-f1c3-4d9d-bc8b-4a5897fda326}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GuiHost\MainWindow">
+      <UniqueIdentifier>{5ad322d0-ed83-4d66-8232-6b945b4ae7fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GuiHost\DialogWidget">
+      <UniqueIdentifier>{a22a0471-dfa7-4e53-934c-75fd179af741}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GuiHost\CoreBridge">
+      <UniqueIdentifier>{3d3dbe11-f857-4da8-a8d4-219d5b5c75e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\GuiHost\File">
+      <UniqueIdentifier>{3152733e-bd1c-41a6-8b58-5142830bcde7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Frontend">
+      <UniqueIdentifier>{bbff1ef5-b745-49d2-a3ea-a1957dd7e64f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Frontend\Lexer">
+      <UniqueIdentifier>{47c3a118-1ab3-43e3-81d6-17eeb0b41dff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Frontend\Parser">
+      <UniqueIdentifier>{312219c6-d292-499d-8c25-c8b7a858d69b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Frontend\Compiler">
+      <UniqueIdentifier>{13598659-4474-46ea-8bb5-ca8b2c5b88f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore">
+      <UniqueIdentifier>{10c35297-3920-416e-94ad-6d6b33f29824}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore\PObjectSystem">
+      <UniqueIdentifier>{6e4af6f4-7604-435a-b924-cb39118907db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore\PObjectSystem\Basic">
+      <UniqueIdentifier>{64cf1ffd-626f-43db-877d-8bf4b05d3c58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore\PObjectSystem\Container">
+      <UniqueIdentifier>{1140abdc-95ce-4498-aa47-dba8365b0334}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore\PObjectSystem\Class">
+      <UniqueIdentifier>{fb06a152-8693-4a44-952f-2418a9896d09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore\PObjectSystem\Function">
+      <UniqueIdentifier>{f5436616-0250-4088-9a5b-420c623c6a06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Frontend\AST">
+      <UniqueIdentifier>{806aacf9-2071-41a0-a393-7a8cdc60bb45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore\RuntimeEnv">
+      <UniqueIdentifier>{9e69e7af-7278-4426-b9e8-47d67d7c16f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\InterpreterCore\PVM">
+      <UniqueIdentifier>{cf45f4f2-560f-48da-8a33-bd1767564816}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RutimeUtils">
+      <UniqueIdentifier>{6d21d073-8f7f-4de2-bccf-b3670f9f7b2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RutimeUtils\Logger">
+      <UniqueIdentifier>{360b3c16-3bb1-4436-96c4-ee44bf4c4588}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RutimeUtils\Exception">
+      <UniqueIdentifier>{258a4641-3aa1-4f9f-bff6-8a0b36983ed8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\RutimeUtils\CommonFunc">
+      <UniqueIdentifier>{dcac829a-0d2f-4bd1-a40b-6b88de159b97}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PClass.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\utils\compiler.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="core\utils\lexer.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="core\utils\parser.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="core\utils\functions.cpp">
-      <Filter>源文件\core\utils</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\ast\astnode.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\blockandframe.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\environment.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pbool.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pfloat.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pfunction.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pint.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\piterator.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\plist.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pnone.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pobject.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pstr.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="core\objects\runtime\pvm.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MainWindow.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="core\utils\lexer.cpp">
+      <Filter>源文件\Frontend\Lexer</Filter>
     </ClCompile>
-    <ClCompile Include="PInstance.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
+    <ClCompile Include="core\utils\compiler.cpp">
+      <Filter>源文件\Frontend\Compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\parser.cpp">
+      <Filter>源文件\Frontend\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pbool.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Basic</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pstr.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Basic</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pint.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Basic</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pfloat.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Basic</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pnone.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Basic</Filter>
     </ClCompile>
     <ClCompile Include="PDict.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
+      <Filter>源文件\InterpreterCore\PObjectSystem\Container</Filter>
     </ClCompile>
-    <ClCompile Include="PSuper.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
+    <ClCompile Include="core\objects\runtime\plist.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Container</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\piterator.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Container</Filter>
+    </ClCompile>
+    <ClCompile Include="PClass.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Class</Filter>
+    </ClCompile>
+    <ClCompile Include="PInstance.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Class</Filter>
     </ClCompile>
     <ClCompile Include="PModel.cpp">
-      <Filter>源文件\core\objects\runtime</Filter>
+      <Filter>源文件\InterpreterCore\PObjectSystem\Class</Filter>
     </ClCompile>
-    <ClCompile Include="Project.cpp">
-      <Filter>源文件\core\utils</Filter>
+    <ClCompile Include="PSuper.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Class</Filter>
     </ClCompile>
-    <ClCompile Include="Core.cpp">
-      <Filter>源文件\core</Filter>
+    <ClCompile Include="core\objects\runtime\pfunction.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem\Function</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pobject.cpp">
+      <Filter>源文件\InterpreterCore\PObjectSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\ast\astnode.cpp">
+      <Filter>源文件\Frontend\AST</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\environment.cpp">
+      <Filter>源文件\InterpreterCore\RuntimeEnv</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\blockandframe.cpp">
+      <Filter>源文件\InterpreterCore\RuntimeEnv</Filter>
+    </ClCompile>
+    <ClCompile Include="core\objects\runtime\pvm.cpp">
+      <Filter>源文件\InterpreterCore\PVM</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
-      <Filter>源文件\core\utils</Filter>
+      <Filter>源文件\RutimeUtils\Logger</Filter>
     </ClCompile>
     <ClCompile Include="Exception.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\RutimeUtils\Exception</Filter>
     </ClCompile>
-    <ClCompile Include="newprojectwidget.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SecondaryWindow.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="core\utils\functions.cpp">
+      <Filter>源文件\RutimeUtils\CommonFunc</Filter>
     </ClCompile>
     <ClCompile Include="CompileOptimizer.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Frontend\Compiler</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -148,97 +220,97 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="core\utils\compiler.h">
-      <Filter>头文件\core\utils</Filter>
-    </QtMoc>
     <QtMoc Include="core\utils\lexer.h">
-      <Filter>头文件\core\utils</Filter>
+      <Filter>头文件\Frontend\Lexer</Filter>
     </QtMoc>
     <QtMoc Include="core\utils\parser.h">
-      <Filter>头文件\core\utils</Filter>
+      <Filter>头文件\Frontend\Parser</Filter>
     </QtMoc>
-    <QtMoc Include="core\objects\runtime\environment.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="core\objects\runtime\pint.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+    <QtMoc Include="core\utils\compiler.h">
+      <Filter>头文件\Frontend\Compiler</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\pobject.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+      <Filter>头文件\InterpreterCore\PObjectSystem</Filter>
     </QtMoc>
-    <QtMoc Include="core\objects\runtime\pvm.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="core\objects\runtime\pbool.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+    <QtMoc Include="core\objects\runtime\pint.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Basic</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\pfloat.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="core\objects\runtime\pnone.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+      <Filter>头文件\InterpreterCore\PObjectSystem\Basic</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\pstr.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+      <Filter>头文件\InterpreterCore\PObjectSystem\Basic</Filter>
     </QtMoc>
-    <QtMoc Include="MainWindow.h">
-      <Filter>头文件</Filter>
+    <QtMoc Include="core\objects\runtime\pnone.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Basic</Filter>
     </QtMoc>
-    <QtMoc Include="PSuper.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </QtMoc>
-    <QtMoc Include="core\objects\runtime\piterator.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+    <QtMoc Include="core\objects\runtime\pbool.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Basic</Filter>
     </QtMoc>
     <QtMoc Include="PDict.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+      <Filter>头文件\InterpreterCore\PObjectSystem\Container</Filter>
+    </QtMoc>
+    <QtMoc Include="core\objects\runtime\piterator.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Container</Filter>
+    </QtMoc>
+    <QtMoc Include="PSuper.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Class</Filter>
+    </QtMoc>
+    <QtMoc Include="core\objects\runtime\environment.h">
+      <Filter>头文件\InterpreterCore\RuntimeEnv</Filter>
     </QtMoc>
     <QtMoc Include="core\objects\runtime\blockandframe.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+      <Filter>头文件\InterpreterCore\RuntimeEnv</Filter>
     </QtMoc>
-    <QtMoc Include="Core.h">
-      <Filter>头文件</Filter>
+    <QtMoc Include="core\objects\runtime\pvm.h">
+      <Filter>头文件\InterpreterCore\PVM</Filter>
+    </QtMoc>
+    <QtMoc Include="MainWindow.h">
+      <Filter>头文件\GuiHost\MainWindow</Filter>
     </QtMoc>
     <QtMoc Include="newprojectwidget.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\GuiHost\DialogWidget</Filter>
+    </QtMoc>
+    <QtMoc Include="Core.h">
+      <Filter>头文件\GuiHost\CoreBridge</Filter>
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PClass.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="PInstance.h">
-      <Filter>头文件\core\objects\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="core\objects\runtime\pfunction.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+    <ClInclude Include="core\objects\ast\astnode.h">
+      <Filter>头文件\Frontend\AST</Filter>
     </ClInclude>
     <ClInclude Include="core\objects\runtime\plist.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+      <Filter>头文件\InterpreterCore\PObjectSystem\Container</Filter>
     </ClInclude>
-    <ClInclude Include="core\objects\ast\astnode.h">
-      <Filter>头文件\core\objects\ast</Filter>
+    <ClInclude Include="PClass.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Class</Filter>
+    </ClInclude>
+    <ClInclude Include="PInstance.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Class</Filter>
     </ClInclude>
     <ClInclude Include="PModel.h">
-      <Filter>头文件\core\objects\runtime</Filter>
+      <Filter>头文件\InterpreterCore\PObjectSystem\Class</Filter>
     </ClInclude>
-    <ClInclude Include="Project.h">
-      <Filter>头文件\core\utils</Filter>
-    </ClInclude>
-    <ClInclude Include="core\utils\functions.h">
-      <Filter>头文件\core\utils</Filter>
+    <ClInclude Include="core\objects\runtime\pfunction.h">
+      <Filter>头文件\InterpreterCore\PObjectSystem\Function</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
-      <Filter>头文件\core\utils</Filter>
+      <Filter>头文件\RuntimeUtils\Logger</Filter>
     </ClInclude>
     <ClInclude Include="Exception.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\RuntimeUtils\Exception</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\functions.h">
+      <Filter>头文件\RuntimeUtils\CommonFunc</Filter>
     </ClInclude>
     <ClInclude Include="SecondaryWindow.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\GuiHost\DialogWidget</Filter>
     </ClInclude>
     <ClInclude Include="CompileOptimizer.h">
-      <Filter>头文件</Filter>
+      <Filter>头文件\Frontend\Compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="Project.h">
+      <Filter>头文件\GuiHost\File</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

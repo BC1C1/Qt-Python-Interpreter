@@ -56,7 +56,7 @@ QVector<pointer> PIterator::getChildren() const
     auto ret = QVector<pointer>{object};
     if (listCache) ret.append(listCache->sharedFromThis());
     if (dictCache) ret.append(dictCache->sharedFromThis());
-    ret.append(listCache);
+    ret.append(listCache->sharedFromThis());
     return ret;
 }
 

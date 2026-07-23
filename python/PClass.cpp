@@ -50,6 +50,7 @@ namespace Py {
 			ret.push_back(m);
 		}
 		ret.append(parents);
+		return ret;
 	}
 	pointer PClass::__instance__(
 		const pointer& listParams,
