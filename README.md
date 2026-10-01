@@ -39,7 +39,7 @@
 | 语句 | 赋值（变量/下标/属性三种左值）、`print`、`if/elif/else`、`while`、`for ... in ...`、`break`、`continue`、`return`、`pass` |
 | 函数 | 位置参数 + 关键字参数 + **默认参数**；调用时支持位置/关键字混用 |
 | 类 | 类定义、**多继承**、实例化、属性、实例方法、`self` 绑定、**C3 MRO**、`super()`（0/1/2 参数三种形式）、`__init__`、运算符重载（`__add__` 等 dunder 分派）、属性拦截（`__getattr__` / `__setattr__`） |
-| 作用域 | 环境链 + **闭包环境**（`closureEnv`）、`global` 声明、块级作用域 |
+| 作用域 | 环境链（`parentEnvir`）、`global` 声明、块级作用域；**闭包环境的结构已经全部接好**（函数对象在定义处捕获环境 + 查找链上预留了闭包这一环），但嵌套函数访问外层局部变量**还没真正跑通** —— 这部分在本地未提交的修改里尝试过、做到一半（帧被改乱了），所以没有出现在仓库的 `master` 上 |
 | 模块 | `import`：按项目结构寻找 `.py`、独立跑一遍、把结果环境包装成 `PModel` 对象绑定到当前作用域 |
 | 内置 | `print`、`len`（`registerGlobalFunctions` / `registerLen`）、`PList.append`（对象内置方法） |
 
@@ -68,7 +68,7 @@ cache.push_back(HALT);
 |---|---|
 | `valueStack` | 求值栈（`QStack<PObject::pointer>`） |
 | `callFrameStack` | 调用帧：返回地址、返回环境、**当前代码、`selfInstance`、`funcBeloneClass`、caller** |
-| `blockFrameStack` | 循环块帧：`breakPC` / `continuePC`，`break`/`continue` 靠它定位 |
+| `blockFrameStack` | 块帧：`breakPC` / `continuePC`。`break`/`continue` 从栈顶**倒着找**第一个循环帧再跳；循环体结束由 `LOOP_*_END` 弹帧 |
 
 `CallFrame` 里带着 `selfInstance` 与 `funcBeloneClass`，所以 `self` 与 `super()` 的实现是"从当前调用帧取"：
 
@@ -115,6 +115,12 @@ if (mro[index + 1] != PClass::object) return mro[index + 1];
 
 `Project` 负责识别"项目根 / src 目录"，`import` 会 `findFile(...)` 找到目标 `.py`，**新建一个 `Core` 把目标文件整体执行一遍**，然后把它的结果环境包装成 `PModel` 绑定为模块对象。
 
+## 几处设计决定（以及当时为什么这么写）
+
+- **块帧栈的形态是为将来的 `try/except` 留的**：`break` / `continue` 用"倒着找第一个循环帧"而不是直接弹栈顶，循环结束再单独弹帧 —— 这个结构本身支持"逐层退出直到命中目标帧"，也就是异常展开需要的动作。循环控制其实用不着这么写，**这是给 `try` 留的口子**，后来没有继续做。
+- **函数的初始化不在构造函数里**：`makeShared<T>()`（`core/utils/functions.h`）在创建完对象后统一调用 `obj->init()`。原因是对象在构造期间还拿不到自己的智能指针（`sharedFromThis` 拿到的是空的），所以把依赖自身指针的初始化挪到构造之后。这套约定也让 `PFunction` 的闭包环境、参数绑定都能在对象"活过来"之后再建立。
+- **字节码是可序列化的**：`Instruction` 重载了 `QDataStream` 的 `<<` / `>>`，每个函数体编完就 `toByteArray()` 存进函数对象 —— 所以"代码对象"在这里就是一段字节数组，也因此具备了落盘/缓存的基础。
+
 ## 怎么跑
 
 - **环境**：Visual Studio 2022（`python.sln`），Qt（工程用到 `core/gui/widgets`、`QJson`、`QHash`/`QMap`/`QVector`），C++。
@@ -143,7 +149,9 @@ if (mro[index + 1] != PClass::object) return mro[index + 1];
 - **默认参数只在"未传该参数"时按 `PFunction::__call__` 的规则生效**，参数绑定逻辑对"位置参数越过默认值"等边界情况的处理还在完善中。
 - 字符串字面量不支持转义序列；`1.` 这类只有小数点的数字会被判为非法。
 - **`input` 只到词法层**：`lexer.h` 把它列为关键字（`TokenType::INPUT`），但 parser / compiler / VM 里都没有对应处理 —— `parsePrimary` 遇到它走 `default` 分支报"未知的符号"。
-- 闭包、`try/except`、装饰器、生成器等尚未涉及。
+- 闭包：**结构已经铺好但没跑通** —— `PFunction` 在定义处捕获环境、`Environment::getObj` 的查找链里也预留了闭包分支（已提交版本里这两处都在）。但真正让嵌套函数访问外层局部变量这件事没完成：本地未提交的修改里试过一版，帧的结构被改乱后就停在那里了。
+- `try/except`：**有铺垫，没实现**。证据是帧栈的用法 —— `break` / `continue` 是**倒着遍历 `blockFrameStack` 找第一个循环帧**，而循环体结束时由 `LOOP_FOR_END` / `LOOP_WHILE_END` **弹帧**。如果这个块帧栈只服务循环，`break` 直接弹一次栈顶就够了，不必"查找 + 结束再弹"。留成"可逐层退出、直到命中目标帧"的形态，是为了将来接 `try` 的异常展开（栈展开到 handler）—— 但后续没有做。
+- 装饰器、生成器、推导式等尚未涉及。
 
 ## 说明
 
